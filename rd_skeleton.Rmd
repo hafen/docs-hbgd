@@ -1,0 +1,11 @@
+---
+title: "hbgd"
+subtitle: "healthy birth, growth & development"
+author: Ryan Hafen
+output:
+  packagedocs:
+    toc: true
+navpills: |
+  <li><a href='index.html'>Docs</a></li>
+  <li class="active"><a href='rd.html'>Package Ref</a></li>
+---
