@@ -8,7 +8,7 @@ packagedocs::render_docs(
   rd_toc_collapse = TRUE,    # use collapsing toc on rd page
   lib_dir = "assets",        # put assets in "assets" directory
   render_main = TRUE,        # render main page
-  render_rd = TRUE,          # render rd page
+  render_rd = FALSE,          # render rd page
   view_output = TRUE,        # look at the output after render
   rd_index = "rd_index.yaml" # optional path to rd layout yaml
 )

@@ -137,6 +137,9 @@
           <li><a href="#fit_method.gam">fit_method.gam</a></li>
           <li><a href="#fit_method.loess">fit_method.loess</a></li>
           <li><a href="#fit_method.rlm">fit_method.rlm</a></li>
+          <li><a href="#fit_method.fda">fit_method.fda</a></li>
+          <li><a href="#get_face_fit">get_face_fit</a></li>
+          <li><a href="#fit_method.face">fit_method.face</a></li>
           <li><a href="#auto_loess">auto_loess</a></li>
           </ul></li>
           <li><a href="#summary-vis">Summary Vis</a><ul>
@@ -154,6 +157,7 @@
           </ul></li>
           <li><a href="#trelliscope-vis">Trelliscope Vis</a><ul>
           <li><a href="#trscope_trajectories">trscope_trajectories</a></li>
+          <li><a href="#trscope_velocities">trscope_velocities</a></li>
           </ul></li>
           <li><a href="#divisions">Divisions</a><ul>
           <li><a href="#by_subject">by_subject</a></li>
@@ -170,6 +174,7 @@
           <li><a href="#get_subject_data">get_subject_data</a></li>
           <li><a href="#get_time_data">get_time_data</a></li>
           <li><a href="#get_data_attributes">get_data_attributes</a></li>
+          <li><a href="#get_x_range">get_x_range</a></li>
           <li><a href="#fix_height">fix_height</a></li>
           <li><a href="#grid_deriv">grid_deriv</a></li>
           <li><a href="#get_agefreq">get_agefreq</a></li>
@@ -222,7 +227,7 @@ R (&gt;= 3.1), datadr, trelliscope
 Imports
 </h4>
 <p>
-dplyr, lattice, rbokeh (&gt;= 0.2.4.1), ggplot2, mgcv, MASS, numDeriv, gamlss.dist
+dplyr, lattice, rbokeh (&gt;= 0.2.4.1), ggplot2, mgcv, MASS, numDeriv, gamlss.dist, fda
 </p>
 <h4>
 Suggests
@@ -3761,7 +3766,7 @@ Fit a model to an individual’s trajectory and optionally add checkpoints
 <h4>
 Usage
 </h4>
-<pre class="r"><code>fit_trajectory(dat, x_var = "agedays", y_var = "htcm", method = "gam",
+<pre class="r"><code>fit_trajectory(dat, x_var = "agedays", y_var = "htcm", method = "fda",
   xg = NULL, checkpoints = 365 * c(1:2), z_bins = c(-2, 2),
   x_trans = NULL, x_inv = NULL, y_trans = NULL, y_inv = NULL, ...)</code></pre>
 <h4>
@@ -3790,7 +3795,7 @@ name of y variable to model
 method
 </dt>
 <dd class="rd-dd">
-one of “gam”, “loess”, “fda”, “rlm”
+one of “fda”, “gam”, “loess”, “rlm”, “face”
 </dd>
 <dt>
 xg
@@ -3832,13 +3837,13 @@ parameters passed on to the fitting method
 <h4>
 Examples
 </h4>
-<pre class="r"><code>fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "wtkg", method = "rlm")
+<pre class="r"><code>fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "wtkg")
 plot(fit$xy$x, fit$xy$y)
 lines(fit$fitgrid$x, fit$fitgrid$y)
 # there is also a plot method:
 plot(fit, x_range = c(0, 2560))
 # we can fit the z-scores instead
-fit2 <- fit_trajectory(subset(cpp, subjid == 2), y_var = "waz", method = "rlm")
+fit2 <- fit_trajectory(subset(cpp, subjid == 2), y_var = "waz")
 plot(fit2$xy$x, fit2$xy$z)
 lines(fit2$fitgrid$x, fit2$fitgrid$z)</code></pre>
 </div>
@@ -3851,7 +3856,7 @@ Apply trajectory fitting to each subject in a data set
 Usage
 </h4>
 <pre class="r"><code>fit_all_trajectories(dat, subjid = "subjid", x_var = "agedays",
-  y_var = "htcm", method = "gam", checkpoints = 365 * c(1:2),
+  y_var = "htcm", method = "fda", checkpoints = 365 * c(1:2),
   z_bins = c(-2, 2), x_trans = NULL, x_inv = NULL, y_trans = NULL,
   y_inv = NULL)</code></pre>
 <h4>
@@ -3886,7 +3891,7 @@ name of y variable to model
 method
 </dt>
 <dd class="rd-dd">
-one of “gam”, “loess”, “fda”, “rlm”
+one of “fda”, “gam”, “loess”, “rlm”
 </dd>
 <dt>
 checkpoints
@@ -3916,7 +3921,7 @@ inverse transformation functions for x and y to get back to the original scale a
 <h4>
 Examples
 </h4>
-<pre class="r"><code>cppt <- fit_all_trajectories(cpp, y_var = "wtkg", method = "rlm")
+<pre class="r"><code>cppt <- fit_all_trajectories(cpp, y_var = "wtkg")
 cppt[[1]]
 plot(cppt[[1]]$value)</code></pre>
 </div>
@@ -4312,6 +4317,179 @@ order of polynomial fit (default is quadratic, p=2)
 </dt>
 <dd class="rd-dd">
 additional parameters passed to <code><a href=http://www.inside-r.org/r-doc/MASS/rlm>rlm</a></code>
+</dd>
+</dl>
+<h4>
+Note
+</h4>
+<p class="rd-p">
+The trajectory fitting functions are most easily accessed through calling <code><a href=#fit_trajectory>fit_trajectory</a></code> with the <code>method</code> argument to specify the modeling approach to use.
+</p>
+<p class="rd-p">
+These fitting functions can easily be replaced by simply calling the associated R methods, but are provided for convenience to standardize input/output to simplify swapping fitting methods.
+</p>
+</div>
+<div id="fit_method.fda" class="section level2">
+<h2>fit_method.fda</h2>
+<h3>
+Compute functional “fda” fit of growth trajectory
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>fit_methodfda(dat, xg = NULL, cpx = NULL, lambda = 0.1, ...)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data frame specifying x and y coordinates of data to fit
+</dd>
+<dt>
+xg
+</dt>
+<dd class="rd-dd">
+x grid across which to compute fits for plotting (default is sequence along the range of <code>x</code>)
+</dd>
+<dt>
+cpx
+</dt>
+<dd class="rd-dd">
+x values at which to compute “checkpoints” of the fitted subjectss growth trajectory to compare to other subjects
+</dd>
+<dt>
+lambda
+</dt>
+<dd class="rd-dd">
+smoothing parameter passed to <code><a href=http://www.inside-r.org/packages/cran/fda/docs/smooth.basisPar>smooth.basisPar</a></code>
+</dd>
+<dt>
+…
+</dt>
+<dd class="rd-dd">
+additional parameters passed to <code><a href=http://www.inside-r.org/packages/cran/fda/docs/smooth.basisPar>smooth.basisPar</a></code>
+</dd>
+</dl>
+<h4>
+Note
+</h4>
+<p class="rd-p">
+The trajectory fitting functions are most easily accessed through calling <code><a href=#fit_trajectory>fit_trajectory</a></code> with the <code>method</code> argument to specify the modeling approach to use.
+</p>
+<p class="rd-p">
+These fitting functions can easily be replaced by simply calling the associated R methods, but are provided for convenience to standardize input/output to simplify swapping fitting methods.
+</p>
+</div>
+<div id="get_face_fit" class="section level2">
+<h2>get_face_fit</h2>
+<h3>
+Get the result of fitting face.sparse to a data set
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>get_face_fit(dat, x_var = "agedays", y_var = "htcm", knots = 10,
+  x_trans = NULL, y_trans = NULL, ...)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data frame containing variables to model
+</dd>
+<dt>
+x_var
+</dt>
+<dd class="rd-dd">
+name of x variable to model (default “agedays”)
+</dd>
+<dt>
+y_var
+</dt>
+<dd class="rd-dd">
+name of y variable to model (default “htcm”)
+</dd>
+<dt>
+knots
+</dt>
+<dd class="rd-dd">
+number of knots, sent to <code><a href=http://www.inside-r.org/packages/cran/face/docs/select_knots>select_knots</a></code>
+</dd>
+<dt>
+x_trans, y_trans
+</dt>
+<dd class="rd-dd">
+transformation functions to be applied to x and y prior to modeling (see note)
+</dd>
+<dt>
+…
+</dt>
+<dd class="rd-dd">
+additional parameters passed to <code><a href=http://www.inside-r.org/packages/cran/face/docs/face.sparse>face.sparse</a></code>
+</dd>
+</dl>
+<h4>
+Details
+</h4>
+<p class="rd-p">
+This essentially gets an anthropometric data set into shape for <code><a href=http://www.inside-r.org/packages/cran/face/docs/face.sparse>face.sparse</a></code> (sets appropriate data structure and removes missing values) and runs the fitting routine.
+</p>
+<h4>
+Note
+</h4>
+<p class="rd-p">
+The settings for <code>x_trans</code> and <code>y_trans</code> must match that used in <code><a href=#fit_trajectory>fit_trajectory</a></code> and appropriate inverse transformations must be set there accordingly as well.
+</p>
+<h4>
+Examples
+</h4>
+<pre class="r"><code>facefit <- get_face_fit(cpp, y_var = "wtkg")
+fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "wtkg",
+  method = "face", fit = facefit)
+plot(fit)</code></pre>
+</div>
+<div id="fit_method.face" class="section level2">
+<h2>fit_method.face</h2>
+<h3>
+Compute fpca “face” fit of growth trajectory
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>fit_methodface(dat, xg = NULL, cpx = NULL, fit)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data frame specifying x and y coordinates of data to fit
+</dd>
+<dt>
+xg
+</dt>
+<dd class="rd-dd">
+x grid across which to compute fits for plotting (default is sequence along the range of <code>x</code>)
+</dd>
+<dt>
+cpx
+</dt>
+<dd class="rd-dd">
+x values at which to compute “checkpoints” of the fitted subjectss growth trajectory to compare to other subjects
+</dd>
+<dt>
+fit
+</dt>
+<dd class="rd-dd">
+the result of running <code><a href=http://www.inside-r.org/packages/cran/face/docs/face.sparse>face.sparse</a></code> against the entire data set (with convenience wrapper <code><a href=#get_face_fit>get_face_fit</a></code>) which is used to compute per-subject fits
 </dd>
 </dl>
 <h4>
@@ -4873,14 +5051,14 @@ plot_time_count_grid(dat_list)</code></pre>
 <div id="trscope_trajectories" class="section level2">
 <h2>trscope_trajectories</h2>
 <h3>
-Create Trelliscope display of subject trajectories
+Create Trelliscope display of per-subject data and fitted trajectories
 </h3>
 <h4>
 Usage
 </h4>
-<pre class="r"><code>trscope_trajectories(dat, center = FALSE, who_range = NULL, width = 500,
-  height = 520, name = NULL, desc = "", group = NULL,
-  vdbConn = getOption("vdbConn"), view = TRUE)</code></pre>
+<pre class="r"><code>trscope_trajectories(dat, z = FALSE, center = FALSE, x_range = NULL,
+  width = 500, height = 520, name = NULL, desc = "", group = NULL,
+  vdbConn = getOption("vdbConn"))</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4892,13 +5070,19 @@ dat
 either a data frame or object created by <code><a href=#by_subject>by_subject</a></code> or <code><a href=#fit_all_trajectories>fit_all_trajectories</a></code>
 </dd>
 <dt>
+z
+</dt>
+<dd class="rd-dd">
+should the trajectory fit be plotted on the z-scale?
+</dd>
+<dt>
 center
 </dt>
 <dd class="rd-dd">
 should the trajectory be centered around the median WHO standard?
 </dd>
 <dt>
-who_range
+x_range
 </dt>
 <dd class="rd-dd">
 a vector specifying the range (min, max) that the superposed WHO growth standard should span on the x-axis
@@ -4919,7 +5103,7 @@ height of the plot
 name
 </dt>
 <dd class="rd-dd">
-name of the Trelliscope display (if left NULL, will be implied by the vairables being plotted)
+name of the Trelliscope display (if left NULL, will be implied by the variables being plotted and the method name)
 </dd>
 <dt>
 desc
@@ -4939,12 +5123,6 @@ vdbConn
 <dd class="rd-dd">
 an optional VDB connection
 </dd>
-<dt>
-view
-</dt>
-<dd class="rd-dd">
-should the plot be viewed upon creation?
-</dd>
 </dl>
 <h4>
 Examples
@@ -4952,6 +5130,83 @@ Examples
 <pre class="r"><code>  cppsubj <- by_subject(cpp)
   cppt <- fit_all_trajectories(cppsubj, method = "rlm")
   cppt <- trscope_trajectories(cppt)</code></pre>
+</div>
+<div id="trscope_velocities" class="section level2">
+<h2>trscope_velocities</h2>
+<h3>
+Create Trelliscope display of the velocities of per-subject fitted trajectories
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>trscope_velocities(dat, z = FALSE, x_range = NULL, width = 500,
+  height = 520, name = NULL, desc = "", group = NULL,
+  vdbConn = getOption("vdbConn"))</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+either a data frame or object created by <code><a href=#by_subject>by_subject</a></code> or <code><a href=#fit_all_trajectories>fit_all_trajectories</a></code>
+</dd>
+<dt>
+z
+</dt>
+<dd class="rd-dd">
+should velocities according to z-score scale or raw scale be plotted?
+</dd>
+<dt>
+x_range
+</dt>
+<dd class="rd-dd">
+a vector specifying the range (min, max) that the x-axis should span
+</dd>
+<dt>
+width
+</dt>
+<dd class="rd-dd">
+width of the plot
+</dd>
+<dt>
+height
+</dt>
+<dd class="rd-dd">
+height of the plot
+</dd>
+<dt>
+name
+</dt>
+<dd class="rd-dd">
+name of the Trelliscope display (if NULL, will be implied by the variables being plotted and the method name)
+</dd>
+<dt>
+desc
+</dt>
+<dd class="rd-dd">
+description of the Trelliscope display
+</dd>
+<dt>
+group
+</dt>
+<dd class="rd-dd">
+group in which to place the Trelliscope display
+</dd>
+<dt>
+vdbConn
+</dt>
+<dd class="rd-dd">
+an optional VDB connection
+</dd>
+</dl>
+<h4>
+Examples
+</h4>
+<pre class="r"><code>  cppsubj <- by_subject(cpp)
+  cppt <- fit_all_trajectories(cppsubj, method = "rlm")
+  cppt <- trscope_velocities(cppt)</code></pre>
 </div>
 </div>
 <div id="divisions" class="section level1">
@@ -5234,6 +5489,33 @@ str(attributes(cpp))</code></pre>
 See also
 </h4>
 <p><code><a href=#get_data_attributes>get_data_attributes</a></code></p>
+</div>
+<div id="get_x_range" class="section level2">
+<h2>get_x_range</h2>
+<h3>
+Get the x-axis range across all subjects
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>get_x_range(dat, pad = 0.07)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+object obtained from <code><a href=#fit_all_trajectories>fit_all_trajectories</a></code>
+</dd>
+<dt>
+pad
+</dt>
+<dd class="rd-dd">
+padding factor - this much space as a multiple of the span of the x range will be added to the min and max
+</dd>
+</dl>
 </div>
 <div id="fix_height" class="section level2">
 <h2>fix_height</h2>

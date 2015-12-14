@@ -360,7 +360,7 @@ Some examples are below.
 
 Here is an example of using the utility function, `r rdl(geom_who())`, with a plot of a CPP subject's height vs. age, plotting the default of WHO bands at centiles 1, 5, 25, 50, 75, 95, 99:
 
-```{r who_gg, eval=TRUE, echo=TRUE, message=FALSE}
+```{r who_gg, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
 # make sure lencm is also in htcm before plotting
 p <- ggplot(data = subset(cpp, subjid == 8), aes(x = agedays, y = htcm))
 geom_who(p, x = seq(0, 2600, by = 10)) +
@@ -520,7 +520,18 @@ There are many reasons we may want to fit growth trajectories:
 - identify data that deviates from what we perceive as regular growth (noisy around the fitted trajectory, large jumps, etc.)
 - visualization
 
-This package provides a few modeling techniques and tries to find good defaults when applied across many subjects.  The supported techniques include robust linear models via `rlm()`, robust loess smoothing via `loess()`, and splines via `gam()`, and the ability to plug in new modeling techniques is available.
+This package provides a few modeling techniques and tries to find good defaults when applied across many subjects.  The supported techniques include functional smoothing using `smooth.basisPar()` in the `fda` package and `face.sparse()` in the `face` package, robust loess smoothing via `loess()`, splines via `gam()`, robust linear models via `rlm()`, and the ability to plug in new modeling techniques is available.
+
+The goal of the package is to provide a set of best methods that can be used
+
+Any good package that is intended for others to use on new data sets will provide good defaults.  More work is needed in coming to a concensus on the best default choices.  Currently, some considerations that need to be finalized, along with the current default choices, are:
+
+- the best default smoothing method ("fda" currently is the default)
+- the best default smoothing parameters for the best smoothing method (each method has defaults, except loess which does an AIC-like selection)
+- the choice of modeling the raw growth measurements vs. fitting the WHO-transformed z-scores
+- the choice of transformation of both the x-axis variable (age) and measurement variable (log(x + 1) is the current default for both when modeling raw measurements - the identity is the current default when fitting on the z-score scale)
+
+It could well be that different data sets will always warrant different choices.  To assist with making these choices, this package also provides visualization methods to help assess the goodness-of-fit of each approach.  See the [trelliscope](#trelliscope) section for more details.
 
 ## Fitting individual trajectories ##
 
@@ -529,10 +540,10 @@ Fitting the growth trajectory for an individual is possible using the `r rdl(fit
 To fit a trajectory, at a minimum you need to supply a data argument and the name of the y variable.
 
 ```{r fit_traj, eval=TRUE, echo=TRUE}
-fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "htcm", method = "rlm")
+fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "htcm", method = "fda")
 ```
 
-Here in addition to the data and `y_var`, we also specified `method = "rlm"`.  The default trajectory fitting method is "gam", but in the case of our cpp data, the number of observations is sparse for each subject such that there are not enough points to do "gam" fitting.  You can also specify the name of the x variable if your x variable is not "agedays", which is the default.
+Here in addition to the data and `y_var`, we also specified `method = "fda"`.  This is the default fitting method, so we did not need to specify it, but to specify some other method, you would simply change this setting.  You can also specify the name of the x variable if your x variable is not "agedays", which is the default.
 
 We'll talk about some of the other parameters in a minute, but let's first look at what the output looks like.  Our `fit` object is a list with the following elements:
 
@@ -556,6 +567,7 @@ You can investigate what each one of these looks like on your own, but here is a
   + `y`: the corresponding model fit at the "x" checkpoint values
   + `z`: the z-score of the model fit at the "x" checkpoint values
   + `zcat`: a z-score categorization (e.g. <-2 or >-2) for where the subject's growth falls in the z-score scale at each checkpoint
+- `method`: the name of the fitting method used
 - `pars`: a named list of fitting parameters supplied to the particular fitting method
 - `data`: all columns of the data argument for this subject (preserved for later analyses)
 - `sex`: the subject's sex
@@ -586,7 +598,7 @@ plot(fit, who_range = c(0, 2560), hover = c("agedays", "htcm"), center = TRUE)
 
 These are height-for-age difference (HAD) scores [see here](http://www.ifpri.org/blog/once-stunted-always-stunted-whats-catch-growth).
 
-We may also want to plot the data on the z-score scale.  If the y-variable specified in the fitting method is z-transformable, the z-scores are automatically computed and included with the fit.  We can plot on the z-score scale with `r rdl(plot_z())`:
+We may also want to plot the data on the z-score scale.  If the y-variable specified in the fitting method is WHO-transformable, the z-scores are automatically computed and included with the fit.  We can plot on the z-score scale with `r rdl(plot_z())`:
 
 ```{r fit_plot4, eval=TRUE, echo=TRUE, message = FALSE}
 plot_z(fit, hover = c("agedays", "wtkg"))
@@ -630,6 +642,8 @@ In many cases, you may want to simply run your own fitting method on the data an
 - dealing with fitting on the z-score scale
 - providing a self-contained output with data that can be used as a foundation for other methods to build on top of (a few of which we will see later)
 
+We've tried to make `fit_trajectory()` as flexible as possible for fine control over model parameters, and have also made it fairly straightforward to plug in a new fitting method (see [Plugging in a new fitting method](#plugging-in-a-new-fitting-method) for more details) so that this interface is easy to use regardless of your goals.  If you find it not flexible enough or have some ideas to improve it, please [http://github.com/hafen/hbgd/issues](file an issue).
+
 ### Trajectory checkoints ###
 
 The notion of computing trajectory "checkpoints" is very useful for a lot of analytical and visualization activities.
@@ -638,6 +652,7 @@ Consider the following questions:
 
 - What percentage of children in this study were stunted at age 2?
 - Is variable x different for children who were stunted (height z-score < -2) at age 1 but not stunted at age 2 vs. children who remained stunted at age 2?
+- What is the distrubution of growth velosity at age 1?
 - etc.
 
 Many research questions insist that we be able to know a child's trajectory at a specific point in time.  However, most longitudinal growth data sets do not provide data at fixed time points (ages) because this is not how data is collected in real life (we cannot record every child at the exact same ages).
@@ -648,7 +663,9 @@ To estimate a child's trajectory at specific time points, we do it as part of th
 
 Plugging in a new fitting method is as simple as creating a new function, `fit_method.method_name`.  For example, if I want to add a fitting method called "mymethod", I would create a function `fit_method.mymethod`.  Then it will be available to call using `fit_trajectory(..., method = "mymethod")`.  See the source code for `fit_method.loess` for an example of what inputs your method should take and what outputs it should return.
 
-Limitations: Currently fitting trajectories is done independently for each subject.  Some methods like to see the data for all trajectories at once when fitting the data so that information can be borrowed across all the subjects.  We are working on ways to incorporate these types of fitting methods into the `r rdl(fit_trajectory())` framework.  However, this will not always be possible to accomodate, particularly in the case where we have a very large number of subjects and the only way to feasibly fit trajectories is per-subject.
+Limitations: The design of `r rdl(fit_trajectory())` is to fit trajectories is done independently for each subject.  Some methods, like "face", like to see the data for all trajectories at once when fitting the data so that information can be borrowed across all the subjects.  We have provided a workaround for this case, where can first call `r rdl(get_face_fit())` which get the "face" fit object using all the data.  Then you can pass the result from this as a parameter to `r rdl(fit_trajectory())`.  See the help for `r rdl(get_face_fit())` for an example.  Note that a limitation of any approach that needs all the data at once is dealing with larger data sets.
+
+We are working on ways to incorporate these types of fitting methods into the `r rdl(fit_trajectory())` framework.  However, this will not always be possible to accomodate, particularly in the case where we have a very large number of subjects and the only way to feasibly fit trajectories is per-subject.
 
 ## Fitting all trajectories ##
 
@@ -656,24 +673,36 @@ Typically in a study made up of several subjects, we want to fit growth trajecto
 
 For example, to fit the weight-for-age trajectory of each subject in the `cpp` data, we can do the following:
 
-```{r fit5, eval=TRUE, echo=TRUE}
-# cppt <- fit_all_trajectories(cpp, y_var = "wtkg", method = "rlm")
+```{r fit5a, eval=FALSE, echo=FALSE}
+# manual cache
+cppt <- fit_all_trajectories(cpp, y_var = "htcm", z_bins = -2, method = "rlm")
+save(cppt, file = "docs/cache/cppt.Rdata")
 ```
 
-Additional smoothing parameters can also be applied that will be passed on to the fitting method.  Here we use the "rlm" method, which probably won't do the best job fitting the trajectories but is pretty much our only choice since each subject only has 2-4 observations.
+```{r fit5b, eval=TRUE, echo=FALSE}
+load("cache/cppt.Rdata")
+```
 
-The output of `r rdl(fit_all_trajectories())` is a "distributed data object" - basically a list of trajectory fits for each subject, indexed by a key of the subject's id.  For more information about this type of data structure, see the [documentation for datadr](http://tessera.io/docs-datadr).
+```{r fit5c, eval=FALSE, echo=TRUE}
+cppt <- fit_all_trajectories(cpp, y_var = "htcm", z_bins = -2, method = "rlm")
+```
+
+Note that here we are using the default of checkpoints at ages 1 and 2 years and setting the only z-bin boundary to be at -2, which will create two z-score categories at each checkpoint - stunted or not stunted.  Also, instead of the default "fda", we are using "rlm", which is probably not the most appropriate as it is completely parametric and our growth curves are never that simple, but will suffice for an example.
+
+Additional smoothing parameters can also be applied that will be passed on to the fitting method via `r rdl(fit_trajectory())`.
+
+The output of `r rdl(fit_all_trajectories())` is "distributed data object" or "DDO" - basically a list of trajectory fits for each subject, indexed by a key of the subject's id.  DDOs are constructs from an R package [datadr](http://github.com/tesseradata/datadr) that is part of the [Tessera](http://tessera.io) project.  These objects are the basis for creating Trelliscope displays, and while in this particular example we are working with a small in-memory data set, DDOs are designed to be able to be distributed across many disks on a cluster when dealing with large data sets.  For more information about this type of data structure, see the [documentation for datadr](http://tessera.io/docs-datadr).
 
 To inspect the output of the result of `r rdl(fit_all_trajectories())`:
 
 ```{r fitres, eval=TRUE, echo=TRUE}
-# cppt
+cppt
 ```
 
 This tells us the result is a distributed data object with 500 subsets (we have 500 subjects).  To inspect one of the subsets:
 
 ```{r fit6, eval=TRUE, echo=TRUE}
-# str(cppt[[2]], 2)
+str(cppt[[2]], 2)
 ```
 
 We see this is a list with an element "key" telling us that the data in this subset corresponds to `subjid=1`.  The "value" element should look familiar as it is simply the output of `r rdl(fit_trajectory())`.
@@ -681,29 +710,162 @@ We see this is a list with an element "key" telling us that the data in this sub
 We can plot the trajectory of this subset as we have seen before for output of `r rdl(fit_trajectory())`:
 
 ```{r fit7, eval=TRUE, echo=TRUE}
-# plot(cppt[[2]]$value, hover = c("agedays", "wtkg"))
+plot(cppt[[2]]$value, hover = c("agedays", "htcm"))
 ```
 
 Note that we can also access subsets by key:
 
-```{r fit8, eval=TRUE, echo=TRUE}
-# plot(cppt[["subjid=24"]]$value, hover = c("agedays", "wtkg"))
+```{r fit11, eval=TRUE, echo=TRUE}
+plot(cppt[["subjid=24"]]$value, hover = c("agedays", "htcm"))
 ```
 
 We will see how to plot all of these trajectories and make them available in an interactive viewer in the upcoming [Trelliscope](#trelliscope) section.
 
 # Division Methods #
 
-TODO
+Many of the methods in this package rely on splitting the data into pieces and applying methods independently to each piece and then recombining the result in some way that is meaningful for our analysis.  We call this process Divide and Recombine (D&R).  Most often the way we want to divide the data is by `subjectid`, although there are others.
+
+As mentioned previously, we use the [datadr](http://github.com/tesseradata/datadr) package to create divisions (this package is a dependency of `hbgd` and is installed with it so there is no need to install `datadr` separately).  We already implicitly created a division by calling `fit_all_trajectories()`.  However, we may want to explicitly create divisions for specific purposes.
+
+Here we show a few kinds of divisions and how to create them, with some additional helper functions that ship with the package.  For more depth on the D&R process and usage of `datadr`, see [here](http://tessera.io/docs-datadr).
+
+## By subject ##
+
+The way to create a division using the `datadr` package
+
+```{r divide1, eval=FALSE, echo=TRUE}
+cppsubj <- divide(cpp, by = "subjid")
+```
+
+There also is a helper function, `r rdl(by_subject())` that does the same thing and makes sure that additional data attributes are perserved:
+
+```{r divide2a, eval=FALSE, echo=FALSE}
+# manual caching
+cppsubj <- by_subject(cpp)
+save(cppsubj, file = "docs/cache/cppsubj.Rdata")
+```
+
+```{r divide2b, eval=TRUE, echo=FALSE}
+load("cache/cppsubj.Rdata")
+```
+
+```{r divide2c, eval=FALSE, echo=TRUE}
+cppsubj <- by_subject(cpp)
+```
+
+We can use this as an input to `r rdl(fit_all_trajectories())` (if we send in the `cpp` data frame, it will automatically first compute the division for us).  Additionally, we can do other D&R operations.  For example, if we want to compute the number of rows in the data set for each subject and bind those results into a single data frame, we can do the following:
+
+```{r divide3, eval=TRUE, echo=TRUE, message=FALSE}
+head(
+cppsubj %>%
+  addTransform(function(x) nrow(x)) %>%
+  recombine(combRbind))
+```
+
+Again, we refer you to the `datadr` [documentation](http://tessera.io/docs-datadr) to better understand these kinds of operations and other operations you can do.
+
+## By trajectory checkpoints ##
+
+Another useful and slightly more complicated division we might want to obtain is a partitioning of each subject's data according to the location of their trajectory at specified checkpoints.  This can be very useful, for example, when trying to make comparisons between children who were stunted or not at, say, ages 1 and 2 years.
+
+Below is an example of a function `r rdl(by_trajectory_checkpoints())` that takes as an input the output of `r rdl(fit_all_trajectories())` and groups the data for each subject according to the specified checkpoint locations and z-score bins.  In this example, the checkpoints are at 1 and 2 years and the z-score bins are <-2 (stunted) and >-2 (not stunted).  We are using the `cppt` object we computed [previously](#fitting-all-trajectories).
+
+```{r fit8, eval=TRUE, echo=TRUE}
+cppcp <- by_trajectory_checkpoints(cppt)
+# look at result
+cppcp
+```
+
+We see this is a "distributed data frame" (DDF) - a special kind of DDO where each subset is a data frame.  It has 5 subsets.  We can look at the keys for these subsets with:
+
+```{r fit9, eval=TRUE, echo=TRUE}
+getKeys(cppcp)
+```
+
+Thus we see subset 1 is "not stunted at 1 year, not stunted at 2 years", etc.  Now we can investigate the data for the subjects in each subset for further exploration, analyses, or visualization.
+
+```{r fit10, eval=TRUE, echo=TRUE}
+head(cppcp[[1]]$value)
+```
 
 # Trelliscope #
 
-TODO
+A useful approach to visualize the outputs of per-subject trajectory fits is to create Trelliscope displays.  You can learn more about Trelliscope [here]().  The `trelliscope` R package is a dependency of `hbgd` and creates a [Trellis]()-style display, where each subset of a data set is plotted in a single panel and the panels are arranged in a grid of rows and columns.  What distinguishes Trelliscope from Trellis Display is the ability to create Trellis displays with a potentially extremely large number of subsets.  To help the user navigate the space of many panels, the user can specify "cognostics", or metrics that capture something interesting about each subset.
 
-```{r trscope, eval=TRUE, echo=TRUE}
-# trscope_trajectories(cppt)
+We won't go too much more into the details of Trelliscope here, but provide a few examples.  First, there are a few built-in methods that easily create Trelliscope displays from the resulting object of `r rdl(fit_all_trajectories())`.  These methods have default functions for what to plot and what to use as cognostics.  Also, we provide an example of how to create your own custom Trelliscope display.
+
+## Built-in methods ##
+
+Plot data, WHO standard, and fitted line:
+
+```{r trscope1, eval=FALSE, echo=TRUE}
+trscope_trajectories(cppt)
+```
+Plot data, WHO standard, and fitted line:
+
+When centering height around the WHO median, we are plotting the [HAD]((http://www.ifpri.org/blog/once-stunted-always-stunted-whats-catch-growth)).
+
+```{r trscope2, eval=FALSE, echo=TRUE}
+trscope_trajectories(cppt, center = TRUE)
 ```
 
+Plot data, WHO standard, and fitted line on z-scale:
+
+```{r trscope3, eval=FALSE, echo=TRUE}
+trscope_trajectories(cppt, z = TRUE)
+```
+
+Plot fit velocities:
+
+```{r trscope4, eval=FALSE, echo=TRUE}
+trscope_velocities(cppt)
+```
+
+Plot z-score fit velocities:
+
+```{r trscope5, eval=FALSE, echo=TRUE}
+trscope_velocities(cppt, z = TRUE)
+```
+
+## Creating your own ##
+
+See the [Trelliscope docs](http://tessera.io/docs-trelliscope) for more information.  Here is a quick example.  Suppose we want to make a trellisope display of the residuals.  We simply need to grab one subset of the data, create a panel function on that subset that work, and then apply it to the entire `cppt` data using `makeDisplay()`.  More explanation will be added here later.
+
+```{r trscope6, eval=FALSE, echo=TRUE}
+# get a subset
+x <- cppt[[2]]$value
+
+# create a panel funciton
+panel_fn <- function(x) {
+  if(is.null(x$resid))
+    return(NULL)
+  xyplot(x$resid ~ x$xy$x)
+}
+
+# test the panel function
+panel_fn(x)
+
+# make a cognostics function that gets the residual std dev
+cog_fn <- function(x) {
+  if(is.null(x$resid)) {
+    resid_sd <- NA
+  } else {
+    resid_sd <- sd(x$resid, na.rm = TRUE)
+  }
+  list(resid_sd = cog(resid_sd,
+    desc = "Standard deviation of residuals"))
+}
+
+# test cognostics function on a subset
+cog_fn(x)
+
+# make the display
+makeDisplay(cppt,
+  name = "residuals",
+  panelFn = panel_fn,
+  cogFn = cog_fn
+)
+```
 
 
 <!-- Integrate model outputs from nonmem? -->
@@ -759,8 +921,8 @@ More multi-study visualization methods will be added as deemed necessary.
 A few unit conversion functions are available for going between inches/centimeters, pounds/kilograms, etc.  For a list of all of these, see the help page for `r rdl(in2cm())`.
 
 ```{r whoex, eval=TRUE, echo=TRUE, message=FALSE}
-who_value2zscore(1670, in2cm(44))
-who_value2zscore(1670, lb2kg(48), y_var = "wtkg")
+who_htcm2zscore(1670, in2cm(44))
+who_wtkg2zscore(1670, lb2kg(48))
 ```
 
 <!-- ## Derivative ##

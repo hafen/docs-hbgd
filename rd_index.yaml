@@ -86,6 +86,9 @@
     - fit_method.gam
     - fit_method.loess
     - fit_method.rlm
+    - fit_method.fda
+    - get_face_fit
+    - fit_method.face
     - auto_loess
 -
   section_name: Summary Vis
@@ -106,6 +109,7 @@
   section_name: Trelliscope Vis
   topics:
     - trscope_trajectories
+    - trscope_velocities
 -
   section_name: Divisions
   topics:
@@ -126,6 +130,7 @@
     - get_subject_data
     - get_time_data
     - get_data_attributes
+    - get_x_range
     - fix_height
     - grid_deriv
     - get_agefreq
