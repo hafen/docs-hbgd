@@ -12,7 +12,7 @@ navpills: |
 <h1>Healthy birth, growth &amp; development</h1>
 
 <p><strong>Authors:</strong> <a href="mailto:rhafen@gmail.com">Ryan Hafen</a> [aut, cre]</p>
-<p><strong>Version:</strong> 0.2</p>
+<p><strong>Version:</strong> 0.2.2</p>
 <p><strong>License:</strong> MIT + file LICENSE</p>
 
 <h4>Description</h4>
@@ -1991,7 +1991,7 @@ lines(fit2$fitgrid$x, fit2$fitgrid$z)</code></pre>
   <dt>y_var</dt>
   <dd class="rd-dd">name of y variable to model</dd>
   <dt>method</dt>
-  <dd class="rd-dd">one of "fda", "gam", "loess", "rlm"</dd>
+  <dd class="rd-dd">one of "fda", "gam", "loess", "rlm", "face"</dd>
   <dt>checkpoints</dt>
   <dd class="rd-dd">x values at which to compute "checkpoints" of the subjectss growth trajectory to compare to other subjects</dd>
   <dt>z_bins</dt>
@@ -2057,8 +2057,8 @@ plot(fit, hover = c("wtkg", "bmi", "waz", "haz"))</code></pre>
 
 
 <h4>Usage</h4>
-<pre class="r"><code>plot_z(x, x_range = NULL, width = 500, height = 520, hover = NULL,
-  checkpoints = TRUE, z = -3:0, ...)</code></pre>
+<pre class="r"><code>plot_z(x, x_range = NULL, nadir = TRUE, width = 500, height = 520,
+  hover = NULL, checkpoints = TRUE, z = -3:0, ...)</code></pre>
 
 <h4>Arguments</h4>
 <dl class="rd-dl">
@@ -2066,6 +2066,8 @@ plot(fit, hover = c("wtkg", "bmi", "waz", "haz"))</code></pre>
   <dd class="rd-dd">an object returned from <code><a href=#fit_trajectory>fit_trajectory</a></code></dd>
   <dt>x_range</dt>
   <dd class="rd-dd">a vector specifying the range (min, max) that the superposed z-score bands should span on the x-axis</dd>
+  <dt>nadir</dt>
+  <dd class="rd-dd">should a guide be added to the plot showing the location of the nadir?</dd>
   <dt>width</dt>
   <dd class="rd-dd">width of the plot</dd>
   <dt>height</dt>
@@ -2294,7 +2296,7 @@ plot_zvelocity(fit)</code></pre>
   <dt>y_var</dt>
   <dd class="rd-dd">name of y variable to model (default "htcm")</dd>
   <dt>knots</dt>
-  <dd class="rd-dd">number of knots, sent to <code><a href=http://www.inside-r.org/packages/cran/face/docs/select_knots>select_knots</a></code></dd>
+  <dd class="rd-dd">number of knots, sent to <code><a href=http://www.inside-r.org/packages/cran/face/docs/select.knots>select.knots</a></code></dd>
   <dt>x_trans, y_trans</dt>
   <dd class="rd-dd">transformation functions to be applied to x and y prior to modeling (see note)</dd>
   <dt>...</dt>

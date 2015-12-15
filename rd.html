@@ -206,7 +206,7 @@ Healthy birth, growth &amp; development
 <strong>Authors:</strong> <a href="mailto:rhafen@gmail.com">Ryan Hafen</a> [aut, cre]
 </p>
 <p>
-<strong>Version:</strong> 0.2
+<strong>Version:</strong> 0.2.2
 </p>
 <p>
 <strong>License:</strong> MIT + file LICENSE
@@ -3891,7 +3891,7 @@ name of y variable to model
 method
 </dt>
 <dd class="rd-dd">
-one of “fda”, “gam”, “loess”, “rlm”
+one of “fda”, “gam”, “loess”, “rlm”, “face”
 </dd>
 <dt>
 checkpoints
@@ -4011,8 +4011,8 @@ Plot a fitted trajectory on z-score scale
 <h4>
 Usage
 </h4>
-<pre class="r"><code>plot_z(x, x_range = NULL, width = 500, height = 520, hover = NULL,
-  checkpoints = TRUE, z = -3:0, ...)</code></pre>
+<pre class="r"><code>plot_z(x, x_range = NULL, nadir = TRUE, width = 500, height = 520,
+  hover = NULL, checkpoints = TRUE, z = -3:0, ...)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4028,6 +4028,12 @@ x_range
 </dt>
 <dd class="rd-dd">
 a vector specifying the range (min, max) that the superposed z-score bands should span on the x-axis
+</dd>
+<dt>
+nadir
+</dt>
+<dd class="rd-dd">
+should a guide be added to the plot showing the location of the nadir?
 </dd>
 <dt>
 width
@@ -4419,7 +4425,7 @@ name of y variable to model (default “htcm”)
 knots
 </dt>
 <dd class="rd-dd">
-number of knots, sent to <code><a href=http://www.inside-r.org/packages/cran/face/docs/select_knots>select_knots</a></code>
+number of knots, sent to <code><a href=http://www.inside-r.org/packages/cran/face/docs/select.knots>select.knots</a></code>
 </dd>
 <dt>
 x_trans, y_trans
