@@ -8,6 +8,7 @@ output:
 navpills: |
   <li class="active"><a href='index.html'>Docs</a></li>
   <li><a href='rd.html'>Package Ref</a></li>
+  <li><a href='https://github.com/hafen/hbgd'>Github <i class='fa fa-github'></i></a></li>
 ---
 
 ```{r global_options, include=FALSE}
@@ -517,12 +518,11 @@ There are many reasons we may want to fit growth trajectories:
 
 - estimate the trajectory of every subject at a specific age, when the subjects are measured at irregular time points
 - study the velocity of each subject's growth
+- use the growth curves to extract metrics about the subject's growth
 - identify data that deviates from what we perceive as regular growth (noisy around the fitted trajectory, large jumps, etc.)
 - visualization
 
-This package provides a few modeling techniques and tries to find good defaults when applied across many subjects.  The supported techniques include functional smoothing using `smooth.basisPar()` in the `fda` package and `face.sparse()` in the `face` package, robust loess smoothing via `loess()`, splines via `gam()`, robust linear models via `rlm()`, and the ability to plug in new modeling techniques is available.
-
-The goal of the package is to provide a set of best methods that can be used
+This package provides a pluggable framework for trajectory modeling techniques.  The analyst can quickly swap between different methods and parameter settings and have access to visualizations and diagnostics all through the same interface.  The ultimate goal is to provide a class of methods with recommended default choices for different situations (we have found that different data situations - sparse, noisy, etc. - can necessicate different methods) and provide good parameter defaults for each method.  As a start, we have integrated the following methods: functional smoothing using `smooth.basisPar()` in the `fda` package and `face.sparse()` in the `face` package, robust loess smoothing via `loess()`, splines via `gam()`, robust linear models via `rlm()`.  New modeling techniques can be plugged in easily, and even outputs from programs like nonmem can easily be plugged in.
 
 Any good package that is intended for others to use on new data sets will provide good defaults.  More work is needed in coming to a concensus on the best default choices.  Currently, some considerations that need to be finalized, along with the current default choices, are:
 
@@ -531,7 +531,7 @@ Any good package that is intended for others to use on new data sets will provid
 - the choice of modeling the raw growth measurements vs. fitting the WHO-transformed z-scores
 - the choice of transformation of both the x-axis variable (age) and measurement variable (log(x + 1) is the current default for both when modeling raw measurements - the identity is the current default when fitting on the z-score scale)
 
-It could well be that different data sets will always warrant different choices.  To assist with making these choices, this package also provides visualization methods to help assess the goodness-of-fit of each approach.  See the [trelliscope](#trelliscope) section for more details.
+To assist with making these choices, this package provides a collection visualization methods to help assess the goodness-of-fit of each approach.  See the [trelliscope](#trelliscope) section for more details.  We plan to add additional diagnostics / model selection functionality beyond visualization as well.
 
 ## Fitting individual trajectories ##
 
@@ -800,11 +800,11 @@ trscope_trajectories(cppt)
 ```
 Plot data, WHO standard, and fitted line:
 
-When centering height around the WHO median, we are plotting the [HAD]((http://www.ifpri.org/blog/once-stunted-always-stunted-whats-catch-growth)).
-
 ```{r trscope2, eval=FALSE, echo=TRUE}
 trscope_trajectories(cppt, center = TRUE)
 ```
+
+When centering height around the WHO median, we are plotting the [HAD]((http://www.ifpri.org/blog/once-stunted-always-stunted-whats-catch-growth)).
 
 Plot data, WHO standard, and fitted line on z-scale:
 

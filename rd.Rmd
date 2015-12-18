@@ -8,6 +8,7 @@ output:
 navpills: |
   <li><a href='index.html'>Docs</a></li>
   <li class="active"><a href='rd.html'>Package Ref</a></li>
+  <li><a href='https://github.com/hafen/hbgd'>Github <i class='fa fa-github'></i></a></li>
 ---
 <h1>Healthy birth, growth &amp; development</h1>
 
@@ -2296,7 +2297,7 @@ plot_zvelocity(fit)</code></pre>
   <dt>y_var</dt>
   <dd class="rd-dd">name of y variable to model (default "htcm")</dd>
   <dt>knots</dt>
-  <dd class="rd-dd">number of knots, sent to <code><a href=http://www.inside-r.org/packages/cran/face/docs/select.knots>select.knots</a></code></dd>
+  <dd class="rd-dd">number of knots, sent to <code>select.knots</code></dd>
   <dt>x_trans, y_trans</dt>
   <dd class="rd-dd">transformation functions to be applied to x and y prior to modeling (see note)</dd>
   <dt>...</dt>
