@@ -1136,7 +1136,7 @@ Another useful and slightly more complicated division we might want to obtain is
 
 Below is an example of a function `r rdl(by_trajectory_checkpoints())` that takes as an input the output of `r rdl(fit_all_trajectories())` and groups the data for each subject according to the specified checkpoint locations and z-score bins.  In this example, the checkpoints are at 1 and 2 years and the z-score bins are <-2 (stunted) and >-2 (not stunted).  We are using the `smc_tr` object we computed [previously](#fitting-all-trajectories).
 
-```{r fit8, eval=TRUE, echo=TRUE}
+```{r fit8, eval=TRUE, echo=TRUE, message=FALSE}
 smc_cp <- by_trajectory_checkpoints(smc_tr)
 # look at result
 smc_cp
