@@ -9,6 +9,16 @@
 # cur <- unlist(lapply(cur, function(x) x$topics))
 # cat(paste(setdiff(topics, cur), collapse = "\n"))
 -
+  section_name: Data Handling
+  topics:
+    - check_data
+    - get_subject_data
+    - get_time_data
+    - fix_height
+    - add_holdout_ind
+    - view_variables
+    - get_data_attributes
+-
   section_name: WHO Growth Standards
   topics:
     - who_wtkg2zscore
@@ -77,18 +87,24 @@
 -
   section_name: Modeling
   topics:
+    - get_fit
     - fit_trajectory
     - fit_all_trajectories
+    - get_fit_holdout_mse
     - plot.fittedTrajectory
     - plot_z
     - plot_velocity
     - plot_zvelocity
+    - get_avail_methods
     - fit_method.gam
     - fit_method.loess
     - fit_method.rlm
     - fit_method.fda
-    - get_face_fit
-    - fit_method.face
+    - fit_method.brokenstick
+    - fit_method.lwmod
+    - fit_method.sitar
+    - fit_method.smooth.spline
+    - fit_method.wand
     - auto_loess
 -
   section_name: Summary Vis
@@ -119,6 +135,7 @@
   section_name: Data Sets
   topics:
     - cpp
+    - get_smocc_data
     - who
     - who_coefs
     - ig_coefs
@@ -127,15 +144,12 @@
 -
   section_name: Misc
   topics:
-    - get_subject_data
-    - get_time_data
-    - get_data_attributes
     - get_x_range
-    - fix_height
     - grid_deriv
     - get_agefreq
     - log10_1
     - exp10_1
+    - get_nadir
 -
   section_name: Unit Conversion
   topics:

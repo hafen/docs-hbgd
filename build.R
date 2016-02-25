@@ -15,3 +15,5 @@ packagedocs::render_docs(
 
 # setwd("docs")
 # system("R CMD build ../../hbgd")
+
+packagedocs::purl_docs("docs")

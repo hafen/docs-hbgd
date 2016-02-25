@@ -68,6 +68,15 @@
             <div class="col-md-3" id="sidebar-col">
         <div id="toc">
           <ul>
+          <li><a href="#data-handling">Data Handling</a><ul>
+          <li><a href="#check_data">check_data</a></li>
+          <li><a href="#get_subject_data">get_subject_data</a></li>
+          <li><a href="#get_time_data">get_time_data</a></li>
+          <li><a href="#fix_height">fix_height</a></li>
+          <li><a href="#add_holdout_ind">add_holdout_ind</a></li>
+          <li><a href="#view_variables">view_variables</a></li>
+          <li><a href="#get_data_attributes">get_data_attributes</a></li>
+          </ul></li>
           <li><a href="#who-growth-standards">WHO Growth Standards</a><ul>
           <li><a href="#who_wtkg2zscore">who_wtkg2zscore</a></li>
           <li><a href="#who_htcm2zscore">who_htcm2zscore</a></li>
@@ -131,18 +140,24 @@
           <li><a href="#geom_zband">geom_zband</a></li>
           </ul></li>
           <li><a href="#modeling">Modeling</a><ul>
+          <li><a href="#get_fit">get_fit</a></li>
           <li><a href="#fit_trajectory">fit_trajectory</a></li>
           <li><a href="#fit_all_trajectories">fit_all_trajectories</a></li>
+          <li><a href="#get_fit_holdout_mse">get_fit_holdout_mse</a></li>
           <li><a href="#plot.fittedtrajectory">plot.fittedTrajectory</a></li>
           <li><a href="#plot_z">plot_z</a></li>
           <li><a href="#plot_velocity">plot_velocity</a></li>
           <li><a href="#plot_zvelocity">plot_zvelocity</a></li>
+          <li><a href="#get_avail_methods">get_avail_methods</a></li>
           <li><a href="#fit_method.gam">fit_method.gam</a></li>
           <li><a href="#fit_method.loess">fit_method.loess</a></li>
           <li><a href="#fit_method.rlm">fit_method.rlm</a></li>
           <li><a href="#fit_method.fda">fit_method.fda</a></li>
-          <li><a href="#get_face_fit">get_face_fit</a></li>
-          <li><a href="#fit_method.face">fit_method.face</a></li>
+          <li><a href="#fit_method.brokenstick">fit_method.brokenstick</a></li>
+          <li><a href="#fit_method.lwmod">fit_method.lwmod</a></li>
+          <li><a href="#fit_method.sitar">fit_method.sitar</a></li>
+          <li><a href="#fit_method.smooth.spline">fit_method.smooth.spline</a></li>
+          <li><a href="#fit_method.wand">fit_method.wand</a></li>
           <li><a href="#auto_loess">auto_loess</a></li>
           </ul></li>
           <li><a href="#summary-vis">Summary Vis</a><ul>
@@ -168,21 +183,19 @@
           </ul></li>
           <li><a href="#data-sets">Data Sets</a><ul>
           <li><a href="#cpp">cpp</a></li>
+          <li><a href="#get_smocc_data">get_smocc_data</a></li>
           <li><a href="#who_coefs">who_coefs</a></li>
           <li><a href="#ig_coefs">ig_coefs</a></li>
           <li><a href="#hbgd_labels">hbgd_labels</a></li>
           <li><a href="#hbgd_labels_df">hbgd_labels_df</a></li>
           </ul></li>
           <li><a href="#misc">Misc</a><ul>
-          <li><a href="#get_subject_data">get_subject_data</a></li>
-          <li><a href="#get_time_data">get_time_data</a></li>
-          <li><a href="#get_data_attributes">get_data_attributes</a></li>
           <li><a href="#get_x_range">get_x_range</a></li>
-          <li><a href="#fix_height">fix_height</a></li>
           <li><a href="#grid_deriv">grid_deriv</a></li>
           <li><a href="#get_agefreq">get_agefreq</a></li>
           <li><a href="#log10_1">log10_1</a></li>
           <li><a href="#exp10_1">exp10_1</a></li>
+          <li><a href="#get_nadir">get_nadir</a></li>
           </ul></li>
           <li><a href="#unit-conversion">Unit Conversion</a><ul>
           <li><a href="#cm2in">cm2in</a></li>
@@ -206,10 +219,10 @@
 Healthy birth, growth &amp; development
 </h1>
 <p>
-<strong>Authors:</strong> <a href="mailto:rhafen@gmail.com">Ryan Hafen</a> [aut, cre]
+<strong>Authors:</strong> <a href="mailto:rhafen@gmail.com">Ryan Hafen</a> [aut, cre],<a href="mailto:craig.anderson@uts.edu.au">Craig Anderson</a> [ctb]
 </p>
 <p>
-<strong>Version:</strong> 0.2.2
+<strong>Version:</strong> 0.3.1
 </p>
 <p>
 <strong>License:</strong> MIT + file LICENSE
@@ -230,7 +243,7 @@ R (&gt;= 3.1), datadr, trelliscope
 Imports
 </h4>
 <p>
-dplyr, lattice, rbokeh (&gt;= 0.2.4.1), ggplot2, mgcv, MASS, numDeriv, gamlss.dist, fda
+dplyr, lattice, rbokeh (&gt;= 0.2.4.1), ggplot2, mgcv, MASS, numDeriv, gamlss.dist, fda, face (&gt;= 0.1-1), brokenstick (&gt;= 0.16), sitar (&gt;= 1.0.3), DT, lme4, nlme, scales, crayon, stringdist
 </p>
 <h4>
 Suggests
@@ -244,6 +257,233 @@ Enhances
 <p>
 (none)
 </p>
+<div id="data-handling" class="section level1">
+<h1>Data Handling</h1>
+<div id="check_data" class="section level2">
+<h2>check_data</h2>
+<h3>
+Check a dataset to ensure it will be compatible with hbgd methods
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>check_data(dat, has_height = TRUE, has_weight = TRUE, has_hcir = TRUE)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+a data frame
+</dd>
+<dt>
+has_height
+</dt>
+<dd class="rd-dd">
+does this data set contain anthropometric height data?
+</dd>
+<dt>
+has_weight
+</dt>
+<dd class="rd-dd">
+does this data set contain anthropometric weight data?
+</dd>
+<dt>
+has_hcir
+</dt>
+<dd class="rd-dd">
+does this data set contain anthropometric head circumference data?
+</dd>
+</dl>
+<h4>
+Examples
+</h4>
+<pre class="r"><code>check_data(cpp, has_hcir = FALSE)
+
+smc <- brokenstick::smocc.hgtwgt
+check_data(smc, has_hcir = FALSE)
+
+names(smc)[2] <- "subjid"
+names(smc)[5] <- "agedays"
+smc$sex <- as.character(smc$sex)
+smc$sex[smc$sex == "male"] <- "Male"
+smc$sex[smc$sex == "female"] <- "Female"
+names(smc)[10] <- "htcm"
+names(smc)[11] <- "wtkg"
+
+check_data(smc, has_hcir = FALSE)
+
+names(smc)[12] <- "haz"
+smc$waz <- who_wtkg2zscore(smc$agedays, smc$wtkg, smc$sex)
+smc$agedays <- smc$agedays * 365.25
+
+check_data(smc, has_hcir = FALSE)</code></pre>
+</div>
+<div id="get_subject_data" class="section level2">
+<h2>get_subject_data</h2>
+<h3>
+Get subject-level or time-varying variables and rows of longitudinal data
+</h3>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data frame with longitudinal data
+</dd>
+</dl>
+</div>
+<div id="get_time_data" class="section level2">
+<h2>get_time_data</h2>
+<h3>
+Get subject-level or time-varying variables and rows of longitudinal data
+</h3>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data frame with longitudinal data
+</dd>
+</dl>
+</div>
+<div id="fix_height" class="section level2">
+<h2>fix_height</h2>
+<h3>
+Merge htcm and lencm into one variable
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>fix_height(dat, height_var = "htcm", length_var = "lencm",
+  target = "htcm")</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data
+</dd>
+<dt>
+height_var
+</dt>
+<dd class="rd-dd">
+name of height variable
+</dd>
+<dt>
+length_var
+</dt>
+<dd class="rd-dd">
+name of length variable
+</dd>
+<dt>
+target
+</dt>
+<dd class="rd-dd">
+name of target variable to hold the merged variable
+</dd>
+</dl>
+</div>
+<div id="add_holdout_ind" class="section level2">
+<h2>add_holdout_ind</h2>
+<h3>
+Add indicator column for per-subject holdout
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>add_holdout_ind(dat, random = TRUE)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data
+</dd>
+<dt>
+random
+</dt>
+<dd class="rd-dd">
+if TRUE, a random observation per subject will be designated as the holdout, if FALSE, the endpoint for each subject will be designated as the holdout
+</dd>
+</dl>
+</div>
+<div id="view_variables" class="section level2">
+<h2>view_variables</h2>
+<h3>
+View known hbgd variables
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>view_variables()</code></pre>
+</div>
+<div id="get_data_attributes" class="section level2">
+<h2>get_data_attributes</h2>
+<h3>
+Infer and attach attributes to a longitudinal growth study data set
+</h3>
+<p class="rd-p">
+Infer attributes such as variable types of a longitudinal growth study and add as attributes to the data set.
+</p>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>get_data_attributes(dat, meta = NULL, study_meta = NULL)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+a longitudinal growth study data set
+</dd>
+<dt>
+meta
+</dt>
+<dd class="rd-dd">
+a data frame of meta data about the variables (a row for each variable)
+</dd>
+<dt>
+study_meta
+</dt>
+<dd class="rd-dd">
+a single-row data frame or named list of meta data about the study (such as study description, etc.)
+</dd>
+</dl>
+<h4>
+Details
+</h4>
+<p class="rd-p">
+attributes added: - <code>subjectlevel_vars</code>: vector of names of subject-level variables - <code>timevarying_vars</code>: vector of names of time-varying variables - <code>time_vars</code>: vector of names of measures of age - <code>var_summ</code>: data frame containing variable summaries with columns <code>variable</code>, <code>label</code>, <code>type</code>[subject id, time indicator, time-varying, constant], <code>n_unique</code> - <code>subj_count</code>: data frame of counts of records for each subject with columns <code>subjid</code>, <code>n</code> - <code>n_subj</code>: scalar containing total number of subjects - <code>labels</code> named list of variable labels - either populated by matching names with a pre-set list of labels (see <code><a href=#hbgd_labels>hbgd_labels</a></code>) or from a list provided from the <code>meta</code> argument - <code>study_meta</code>: data frame of meta data (if provided from the <code>study_meta</code> argument) - <code>short_id</code>: scalar containing the short unique identifier for the study (if <code>study_meta</code> is provided)
+</p>
+<h4>
+Examples
+</h4>
+<pre class="r"><code>cpp <- get_data_attributes(cpp)
+str(attributes(cpp))</code></pre>
+<h4>
+See also
+</h4>
+<p><code><a href=#get_data_attributes>get_data_attributes</a></code></p>
+</div>
+</div>
 <div id="who-growth-standards" class="section level1">
 <h1>WHO Growth Standards</h1>
 <div id="who_wtkg2zscore" class="section level2">
@@ -3761,16 +4001,16 @@ ggplot2 object to add z bands to
 </div>
 <div id="modeling" class="section level1">
 <h1>Modeling</h1>
-<div id="fit_trajectory" class="section level2">
-<h2>fit_trajectory</h2>
+<div id="get_fit" class="section level2">
+<h2>get_fit</h2>
 <h3>
-Fit a model to an individual’s trajectory and optionally add checkpoints
+Obtain a trajectory “fit” object for a data set
 </h3>
 <h4>
 Usage
 </h4>
-<pre class="r"><code>fit_trajectory(dat, x_var = "agedays", y_var = "htcm", method = "fda",
-  xg = NULL, checkpoints = 365 * c(1:2), z_bins = c(-2, 2),
+<pre class="r"><code>get_fit(dat, x_var = "agedays", y_var = "htcm", method = "fda",
+  xg = NULL, checkpoints = 365 * c(1:2), z_bins = -2, holdout = FALSE,
   x_trans = NULL, x_inv = NULL, y_trans = NULL, y_inv = NULL, ...)</code></pre>
 <h4>
 Arguments
@@ -3786,19 +4026,19 @@ data frame containing variables to model
 x_var
 </dt>
 <dd class="rd-dd">
-name of x variable to model
+name of x variable to model (default is “agedays”)
 </dd>
 <dt>
 y_var
 </dt>
 <dd class="rd-dd">
-name of y variable to model
+name of y variable to model (usually an anthropometric measure or z-score scaled anthropometric measure)
 </dd>
 <dt>
 method
 </dt>
 <dd class="rd-dd">
-one of “fda”, “gam”, “loess”, “rlm”, “face”
+name of fitting method to use (see <code><a href=#get_avail_methods>get_avail_methods</a></code>)
 </dd>
 <dt>
 xg
@@ -3819,6 +4059,12 @@ z_bins
 a vector indicating binning of z-scores for the subjects trajectory at each checkpoint with respect to the the WHO growth standard
 </dd>
 <dt>
+holdout
+</dt>
+<dd class="rd-dd">
+should an observation be held out for fitting (will use column <code>hold</code> in <code>dat</code> to which observations to hold out)
+</dd>
+<dt>
 x_trans, y_trans
 </dt>
 <dd class="rd-dd">
@@ -3837,16 +4083,45 @@ inverse transformation functions for x and y to get back to the original scale a
 parameters passed on to the fitting method
 </dd>
 </dl>
+</div>
+<div id="fit_trajectory" class="section level2">
+<h2>fit_trajectory</h2>
+<h3>
+Apply a model fit to an individual’s trajectory
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>fit_trajectory(dat, fit)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data frame containing variables for one subject to apply a fit to
+</dd>
+<dt>
+fit
+</dt>
+<dd class="rd-dd">
+an object returned from <code><a href=#get_fit>get_fit</a></code>
+</dd>
+</dl>
 <h4>
 Examples
 </h4>
-<pre class="r"><code>fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "wtkg")
+<pre class="r"><code>mod <- get_fit(cpp, y_var = "wtkg")
+fit <- fit_trajectory(subset(cpp, subjid == 2), mod)
 plot(fit$xy$x, fit$xy$y)
 lines(fit$fitgrid$x, fit$fitgrid$y)
 # there is also a plot method:
 plot(fit, x_range = c(0, 2560))
 # we can fit the z-scores instead
-fit2 <- fit_trajectory(subset(cpp, subjid == 2), y_var = "waz")
+mod2 <- get_fit(cpp, y_var = "waz")
+fit2 <- fit_trajectory(subset(cpp, subjid == 2), mod2)
 plot(fit2$xy$x, fit2$xy$z)
 lines(fit2$fitgrid$x, fit2$fitgrid$z)</code></pre>
 </div>
@@ -3858,10 +4133,7 @@ Apply trajectory fitting to each subject in a data set
 <h4>
 Usage
 </h4>
-<pre class="r"><code>fit_all_trajectories(dat, subjid = "subjid", x_var = "agedays",
-  y_var = "htcm", method = "fda", checkpoints = 365 * c(1:2),
-  z_bins = c(-2, 2), x_trans = NULL, x_inv = NULL, y_trans = NULL,
-  y_inv = NULL)</code></pre>
+<pre class="r"><code>fit_all_trajectories(dat, fit)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -3873,52 +4145,10 @@ dat
 a data frame containing data for several subjects or a ddf already divided by subject, as obtained from <code><a href=#by_subject>by_subject</a></code>
 </dd>
 <dt>
-subjid
+fit
 </dt>
 <dd class="rd-dd">
-variable name in <code>dat</code> that contains the subjects identifier
-</dd>
-<dt>
-x_var
-</dt>
-<dd class="rd-dd">
-name of x variable to model
-</dd>
-<dt>
-y_var
-</dt>
-<dd class="rd-dd">
-name of y variable to model
-</dd>
-<dt>
-method
-</dt>
-<dd class="rd-dd">
-one of “fda”, “gam”, “loess”, “rlm”, “face”
-</dd>
-<dt>
-checkpoints
-</dt>
-<dd class="rd-dd">
-x values at which to compute “checkpoints” of the subjectss growth trajectory to compare to other subjects
-</dd>
-<dt>
-z_bins
-</dt>
-<dd class="rd-dd">
-a vector indicating binning of z-scores for the subjects trajectory at each checkpoint with respect to the the WHO growth standard
-</dd>
-<dt>
-x_trans, y_trans
-</dt>
-<dd class="rd-dd">
-transformation functions to be applied to x and y prior to modeling
-</dd>
-<dt>
-x_inv, y_inv
-</dt>
-<dd class="rd-dd">
-inverse transformation functions for x and y to get back to the original scale after modeling
+an object returned from <code><a href=#get_fit>get_fit</a></code>
 </dd>
 </dl>
 <h4>
@@ -3927,6 +4157,33 @@ Examples
 <pre class="r"><code>cppt <- fit_all_trajectories(cpp, y_var = "wtkg")
 cppt[[1]]
 plot(cppt[[1]]$value)</code></pre>
+</div>
+<div id="get_fit_holdout_mse" class="section level2">
+<h2>get_fit_holdout_mse</h2>
+<h3>
+Get MSE for holdout
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>get_fit_holdout_mse(d, z = TRUE)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+d
+</dt>
+<dd class="rd-dd">
+an object returned from <code><a href=#fit_all_trajectories>fit_all_trajectories</a></code>
+</dd>
+<dt>
+z
+</dt>
+<dd class="rd-dd">
+compute MSE on z-score scale or original scale?
+</dd>
+</dl>
 </div>
 <div id="plot.fittedtrajectory" class="section level2">
 <h2>plot.fittedTrajectory</h2>
@@ -4001,7 +4258,8 @@ additional parameters passed to <code><a href=http://www.inside-r.org/packages/c
 <h4>
 Examples
 </h4>
-<pre class="r"><code>fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "wtkg", method = "rlm")
+<pre class="r"><code>mod <- get_fit(cpp, y_var = "wtkg", method = "rlm")
+fit <- fit_trajectory(subset(cpp, subjid == 2), mod)
 plot(fit)
 plot(fit, center = TRUE)
 plot(fit, hover = c("wtkg", "bmi", "waz", "haz"))</code></pre>
@@ -4014,7 +4272,7 @@ Plot a fitted trajectory on z-score scale
 <h4>
 Usage
 </h4>
-<pre class="r"><code>plot_z(x, x_range = NULL, nadir = TRUE, width = 500, height = 520,
+<pre class="r"><code>plot_z(x, x_range = NULL, nadir = FALSE, width = 500, height = 520,
   hover = NULL, checkpoints = TRUE, z = -3:0, ...)</code></pre>
 <h4>
 Arguments
@@ -4078,7 +4336,8 @@ additional parameters passed to <code><a href=http://www.inside-r.org/packages/c
 <h4>
 Examples
 </h4>
-<pre class="r"><code>fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "wtkg", method = "rlm")
+<pre class="r"><code>mod <- get_fit(cpp, y_var = "wtkg", method = "rlm")
+fit <- fit_trajectory(subset(cpp, subjid == 2), mod)
 plot_z(fit)</code></pre>
 </div>
 <div id="plot_velocity" class="section level2">
@@ -4122,7 +4381,8 @@ additional parameters passed to <code><a href=http://www.inside-r.org/packages/c
 <h4>
 Examples
 </h4>
-<pre class="r"><code>fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "wtkg", method = "rlm")
+<pre class="r"><code>mod <- get_fit(cpp, y_var = "wtkg", method = "rlm")
+fit <- fit_trajectory(subset(cpp, subjid == 2), mod)
 plot_velocity(fit)</code></pre>
 </div>
 <div id="plot_zvelocity" class="section level2">
@@ -4166,18 +4426,33 @@ additional parameters passed to <code><a href=http://www.inside-r.org/packages/c
 <h4>
 Examples
 </h4>
-<pre class="r"><code>fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "wtkg", method = "rlm")
+<pre class="r"><code>mod <- get_fit(cpp, y_var = "wtkg", method = "rlm")
+fit <- fit_trajectory(subset(cpp, subjid == 2), mod)
 plot_zvelocity(fit)</code></pre>
 </div>
-<div id="fit_method.gam" class="section level2">
-<h2>fit_method.gam</h2>
+<div id="get_avail_methods" class="section level2">
+<h2>get_avail_methods</h2>
 <h3>
-Compute spline fit of growth trajectory
+Get names of all available fitting methods
 </h3>
 <h4>
 Usage
 </h4>
-<pre class="r"><code>fit_methodgam(dat, xg = NULL, cpx = NULL, ...)</code></pre>
+<pre class="r"><code>get_avail_methods()</code></pre>
+<h4>
+See also
+</h4>
+<p><code><a href=#get_fit>get_fit</a></code></p>
+</div>
+<div id="fit_method.gam" class="section level2">
+<h2>fit_method.gam</h2>
+<h3>
+Compute gam spline fit of growth trajectory
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>fit_methodgam(dat, ...)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4187,18 +4462,6 @@ dat
 </dt>
 <dd class="rd-dd">
 data frame specifying x and y coordinates of data to fit
-</dd>
-<dt>
-xg
-</dt>
-<dd class="rd-dd">
-x grid across which to compute fits for plotting (default is sequence along the range of <code>x</code>)
-</dd>
-<dt>
-cpx
-</dt>
-<dd class="rd-dd">
-x values at which to compute “checkpoints” of the fitted subjectss growth trajectory to compare to other subjects
 </dd>
 <dt>
 …
@@ -4225,8 +4488,7 @@ Compute loess fit of growth trajectory
 <h4>
 Usage
 </h4>
-<pre class="r"><code>fit_methodloess(dat, xg = NULL, cpx = NULL, span = c(0.05, 3),
-  degree = c(1, 2), family = "symmetric", ...)</code></pre>
+<pre class="r"><code>fit_methodloess(dat, ...)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4238,40 +4500,10 @@ dat
 data frame specifying x and y coordinates of data to fit
 </dd>
 <dt>
-xg
-</dt>
-<dd class="rd-dd">
-x grid across which to compute fits for plotting (default is sequence along the range of <code>x</code>)
-</dd>
-<dt>
-cpx
-</dt>
-<dd class="rd-dd">
-x values at which to compute “checkpoints” of the fitted subjectss growth trajectory to compare to other subjects
-</dd>
-<dt>
-span
-</dt>
-<dd class="rd-dd">
-<code><a href=http://www.inside-r.org/r-doc/stats/loess>loess</a></code> smoothing parameter
-</dd>
-<dt>
-degree
-</dt>
-<dd class="rd-dd">
-<code><a href=http://www.inside-r.org/r-doc/stats/loess>loess</a></code> smoothing parameter
-</dd>
-<dt>
-family
-</dt>
-<dd class="rd-dd">
-<code><a href=http://www.inside-r.org/r-doc/stats/loess>loess</a></code> smoothing parameter
-</dd>
-<dt>
 …
 </dt>
 <dd class="rd-dd">
-additional parameters passed to <code><a href=http://www.inside-r.org/r-doc/stats/loess>loess</a></code>
+additional parameters passed to <code><a href=http://www.inside-r.org/r-doc/stats/loess>loess</a></code>, notably <code>span</code>, <code>degree</code>, and <code>family</code>
 </dd>
 </dl>
 <h4>
@@ -4292,7 +4524,7 @@ Compute robust linear model fit of growth trajectory
 <h4>
 Usage
 </h4>
-<pre class="r"><code>fit_methodrlm(dat, xg = NULL, cpx = NULL, p = 2, ...)</code></pre>
+<pre class="r"><code>fit_methodrlm(dat, ...)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4304,28 +4536,10 @@ dat
 data frame specifying x and y coordinates of data to fit
 </dd>
 <dt>
-xg
-</dt>
-<dd class="rd-dd">
-x grid across which to compute fits for plotting (default is sequence along the range of <code>x</code>)
-</dd>
-<dt>
-cpx
-</dt>
-<dd class="rd-dd">
-x values at which to compute “checkpoints” of the fitted subjectss growth trajectory to compare to other subjects
-</dd>
-<dt>
-p
-</dt>
-<dd class="rd-dd">
-order of polynomial fit (default is quadratic, p=2)
-</dd>
-<dt>
 …
 </dt>
 <dd class="rd-dd">
-additional parameters passed to <code><a href=http://www.inside-r.org/r-doc/MASS/rlm>rlm</a></code>
+additional parameters passed to <code><a href=http://www.inside-r.org/r-doc/MASS/rlm>rlm</a></code>, also <code>p</code> which is the order of polynomial fit (default is quadratic, p=2)
 </dd>
 </dl>
 <h4>
@@ -4346,7 +4560,7 @@ Compute functional “fda” fit of growth trajectory
 <h4>
 Usage
 </h4>
-<pre class="r"><code>fit_methodfda(dat, xg = NULL, cpx = NULL, lambda = 0.1, ...)</code></pre>
+<pre class="r"><code>fit_methodfda(dat, ...)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4358,28 +4572,10 @@ dat
 data frame specifying x and y coordinates of data to fit
 </dd>
 <dt>
-xg
-</dt>
-<dd class="rd-dd">
-x grid across which to compute fits for plotting (default is sequence along the range of <code>x</code>)
-</dd>
-<dt>
-cpx
-</dt>
-<dd class="rd-dd">
-x values at which to compute “checkpoints” of the fitted subjectss growth trajectory to compare to other subjects
-</dd>
-<dt>
-lambda
-</dt>
-<dd class="rd-dd">
-smoothing parameter passed to <code><a href=http://www.inside-r.org/packages/cran/fda/docs/smooth.basisPar>smooth.basisPar</a></code>
-</dd>
-<dt>
 …
 </dt>
 <dd class="rd-dd">
-additional parameters passed to <code><a href=http://www.inside-r.org/packages/cran/fda/docs/smooth.basisPar>smooth.basisPar</a></code>
+additional parameters passed to <code><a href=http://www.inside-r.org/packages/cran/fda/docs/smooth.basisPar>smooth.basisPar</a></code>, notably <code>lambda</code> which defaults to 0.1
 </dd>
 </dl>
 <h4>
@@ -4392,16 +4588,15 @@ The trajectory fitting functions are most easily accessed through calling <code>
 These fitting functions can easily be replaced by simply calling the associated R methods, but are provided for convenience to standardize input/output to simplify swapping fitting methods.
 </p>
 </div>
-<div id="get_face_fit" class="section level2">
-<h2>get_face_fit</h2>
+<div id="fit_method.brokenstick" class="section level2">
+<h2>fit_method.brokenstick</h2>
 <h3>
-Get the result of fitting face.sparse to a data set
+Get the result of fitting brokenstick to a data set
 </h3>
 <h4>
 Usage
 </h4>
-<pre class="r"><code>get_face_fit(dat, x_var = "agedays", y_var = "htcm", knots = 10,
-  x_trans = NULL, y_trans = NULL, ...)</code></pre>
+<pre class="r"><code>fit_methodbrokenstick(dat, ...)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4413,41 +4608,17 @@ dat
 data frame containing variables to model
 </dd>
 <dt>
-x_var
-</dt>
-<dd class="rd-dd">
-name of x variable to model (default “agedays”)
-</dd>
-<dt>
-y_var
-</dt>
-<dd class="rd-dd">
-name of y variable to model (default “htcm”)
-</dd>
-<dt>
-knots
-</dt>
-<dd class="rd-dd">
-number of knots, sent to <code>select.knots</code>
-</dd>
-<dt>
-x_trans, y_trans
-</dt>
-<dd class="rd-dd">
-transformation functions to be applied to x and y prior to modeling (see note)
-</dd>
-<dt>
 …
 </dt>
 <dd class="rd-dd">
-additional parameters passed to <code><a href=http://www.inside-r.org/packages/cran/face/docs/face.sparse>face.sparse</a></code>
+additional parameters passed to <code><a href=http://www.inside-r.org/packages/cran/brokenstick/docs/brokenstick>brokenstick</a></code>, most notably <code>knots</code>
 </dd>
 </dl>
 <h4>
 Details
 </h4>
 <p class="rd-p">
-This essentially gets an anthropometric data set into shape for <code><a href=http://www.inside-r.org/packages/cran/face/docs/face.sparse>face.sparse</a></code> (sets appropriate data structure and removes missing values) and runs the fitting routine.
+This essentially gets an anthropometric data set into shape for <code><a href=http://www.inside-r.org/packages/cran/brokenstick/docs/brokenstick>brokenstick</a></code> (sets appropriate data structure and removes missing values) and runs the fitting routine.
 </p>
 <h4>
 Note
@@ -4458,20 +4629,109 @@ The settings for <code>x_trans</code> and <code>y_trans</code> must match that u
 <h4>
 Examples
 </h4>
-<pre class="r"><code>facefit <- get_face_fit(cpp, y_var = "wtkg")
-fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "wtkg",
-  method = "face", fit = facefit)
+<pre class="r"><code>bsfit <- get_fit(cpp, y_var = "haz", method = "brokenstick")
+fit <- fit_trajectory(subset(cpp, subjid == 2), fit = bsfit)
 plot(fit)</code></pre>
 </div>
-<div id="fit_method.face" class="section level2">
-<h2>fit_method.face</h2>
+<div id="fit_method.lwmod" class="section level2">
+<h2>fit_method.lwmod</h2>
 <h3>
-Compute fpca “face” fit of growth trajectory
+Get the result of fitting a Laird and Ware linear or quadratic model to a data set
 </h3>
 <h4>
 Usage
 </h4>
-<pre class="r"><code>fit_methodface(dat, xg = NULL, cpx = NULL, fit)</code></pre>
+<pre class="r"><code>fit_methodlwmod(dat, ...)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data frame containing variables to model
+</dd>
+<dt>
+…
+</dt>
+<dd class="rd-dd">
+additional parameters, most notably <code>deg</code> which controls the degree of polynomial for the fit (1 for linear and 2 for quadratic)
+</dd>
+</dl>
+<h4>
+Details
+</h4>
+<p class="rd-p">
+This essentially gets an anthropometric data set into shape for <code><a href=http://www.inside-r.org/packages/cran/sitar/docs/sitar>sitar</a></code> (sets appropriate data structure and removes missing values) and runs the fitting routine.
+</p>
+<h4>
+Note
+</h4>
+<p class="rd-p">
+The settings for <code>x_trans</code> and <code>y_trans</code> must match that used in <code><a href=#fit_trajectory>fit_trajectory</a></code> and appropriate inverse transformations must be set there accordingly as well.
+</p>
+<h4>
+Examples
+</h4>
+<pre class="r"><code>lwfit <- get_fit(cpp, y_var = "haz", method = "lwmod", deg = 2)
+fit <- fit_trajectory(subset(cpp, subjid == 2), fit = lwfit)
+plot(fit)</code></pre>
+</div>
+<div id="fit_method.sitar" class="section level2">
+<h2>fit_method.sitar</h2>
+<h3>
+Get the result of fitting sitar to a data set
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>fit_methodsitar(dat, ...)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data frame containing variables to model
+</dd>
+<dt>
+…
+</dt>
+<dd class="rd-dd">
+additional parameters passed to <code><a href=http://www.inside-r.org/packages/cran/sitar/docs/sitar>sitar</a></code>, most notably <code>df</code> which defaults to 3
+</dd>
+</dl>
+<h4>
+Details
+</h4>
+<p class="rd-p">
+This essentially gets an anthropometric data set into shape for <code><a href=http://www.inside-r.org/packages/cran/sitar/docs/sitar>sitar</a></code> (sets appropriate data structure and removes missing values) and runs the fitting routine.
+</p>
+<h4>
+Note
+</h4>
+<p class="rd-p">
+The settings for <code>x_trans</code> and <code>y_trans</code> must match that used in <code><a href=#fit_trajectory>fit_trajectory</a></code> and appropriate inverse transformations must be set there accordingly as well.
+</p>
+<h4>
+Examples
+</h4>
+<pre class="r"><code>sitfit <- get_fit(cpp, y_var = "haz", method = "sitar")
+fit <- fit_trajectory(subset(cpp, subjid == 2), fit = sitfit)
+plot(fit)</code></pre>
+</div>
+<div id="fit_method.smooth.spline" class="section level2">
+<h2>fit_method.smooth.spline</h2>
+<h3>
+Compute smooth.spline fit of growth trajectory
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>fit_methodsmooth.spline(dat, ...)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4483,22 +4743,10 @@ dat
 data frame specifying x and y coordinates of data to fit
 </dd>
 <dt>
-xg
+…
 </dt>
 <dd class="rd-dd">
-x grid across which to compute fits for plotting (default is sequence along the range of <code>x</code>)
-</dd>
-<dt>
-cpx
-</dt>
-<dd class="rd-dd">
-x values at which to compute “checkpoints” of the fitted subjectss growth trajectory to compare to other subjects
-</dd>
-<dt>
-fit
-</dt>
-<dd class="rd-dd">
-the result of running <code><a href=http://www.inside-r.org/packages/cran/face/docs/face.sparse>face.sparse</a></code> against the entire data set (with convenience wrapper <code><a href=#get_face_fit>get_face_fit</a></code>) which is used to compute per-subject fits
+additional parameters passed to <code><a href=http://www.inside-r.org/r-doc/stats/smooth.spline>smooth.spline</a></code>
 </dd>
 </dl>
 <h4>
@@ -4510,6 +4758,51 @@ The trajectory fitting functions are most easily accessed through calling <code>
 <p class="rd-p">
 These fitting functions can easily be replaced by simply calling the associated R methods, but are provided for convenience to standardize input/output to simplify swapping fitting methods.
 </p>
+</div>
+<div id="fit_method.wand" class="section level2">
+<h2>fit_method.wand</h2>
+<h3>
+Get the result of fitting a “Wand” model to a data set
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>fit_methodwand(dat, ...)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+dat
+</dt>
+<dd class="rd-dd">
+data frame containing variables to model
+</dd>
+<dt>
+…
+</dt>
+<dd class="rd-dd">
+additional parameters, most notably <code>deg</code> which controls the degree of polynomial for the fit (1 for linear and 2 for quadratic)
+</dd>
+</dl>
+<h4>
+Details
+</h4>
+<p class="rd-p">
+This essentially gets an anthropometric data set into shape for <code><a href=http://www.inside-r.org/packages/cran/sitar/docs/sitar>sitar</a></code> (sets appropriate data structure and removes missing values) and runs the fitting routine.
+</p>
+<h4>
+Note
+</h4>
+<p class="rd-p">
+The settings for <code>x_trans</code> and <code>y_trans</code> must match that used in <code><a href=#fit_trajectory>fit_trajectory</a></code> and appropriate inverse transformations must be set there accordingly as well.
+</p>
+<h4>
+Examples
+</h4>
+<pre class="r"><code>wfit <- get_fit(cpp, y_var = "haz", method = "lwmod", deg = 2)
+fit <- fit_trajectory(subset(cpp, subjid == 2), fit = wfit)
+plot(fit)</code></pre>
 </div>
 <div id="auto_loess" class="section level2">
 <h2>auto_loess</h2>
@@ -4800,8 +5093,8 @@ Plot histogram and quantile plot of age at first visit
 <h4>
 Usage
 </h4>
-<pre class="r"><code>plot_first_visit_age(dat, subjid = "subjid", agevar = "agedays",
-  agelab = "first visit age (days)", width = 450, height = 450)</code></pre>
+<pre class="r"><code>plot_first_visit_age(dat, agelab = "first visit age (days)", width = 450,
+  height = 450)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4811,18 +5104,6 @@ dat
 </dt>
 <dd class="rd-dd">
 a longitudinal growth study data set
-</dd>
-<dt>
-subjid
-</dt>
-<dd class="rd-dd">
-variable name in <code>dat</code> that contains the subjects identifier
-</dd>
-<dt>
-agevar
-</dt>
-<dd class="rd-dd">
-variable name in <code>dat</code> that contains a measure of the subjects age
 </dd>
 <dt>
 agelab
@@ -4856,7 +5137,7 @@ Plot histogram and quantile plot of number of “visits” for each subject
 <h4>
 Usage
 </h4>
-<pre class="r"><code>plot_visit_distn(dat, subjid = "subjid", width = 450, height = 450)</code></pre>
+<pre class="r"><code>plot_visit_distn(dat, width = 450, height = 450)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4866,12 +5147,6 @@ dat
 </dt>
 <dd class="rd-dd">
 a longitudinal growth study data set
-</dd>
-<dt>
-subjid
-</dt>
-<dd class="rd-dd">
-variable name in <code>dat</code> that contains the subjects identifier
 </dd>
 <dt>
 width
@@ -4902,8 +5177,7 @@ Plot a matrix comparing variables present in a list of studies
 <h4>
 Usage
 </h4>
-<pre class="r"><code>plot_var_matrix(dat_list, width = 845, h_padding = 0, subjid = "subjid",
-  agevar = "agedays")</code></pre>
+<pre class="r"><code>plot_var_matrix(dat_list, width = 845, h_padding = 0, head = NULL)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4927,16 +5201,10 @@ h_padding
 extra height to add to the plot to account for long variable names
 </dd>
 <dt>
-subjid
+head
 </dt>
 <dd class="rd-dd">
-variable name in <code>dat</code> that contains the subjects identifier
-</dd>
-<dt>
-agevar
-</dt>
-<dd class="rd-dd">
-variable name in <code>dat</code> that contains a measure of the subjects age
+the number of variables to limit the x-axis to (if negative, it will show all but the first <code>head</code> variables)
 </dd>
 </dl>
 <h4>
@@ -4957,8 +5225,7 @@ Plot boxplots of distrubutions of number of records per subject for a list of st
 <h4>
 Usage
 </h4>
-<pre class="r"><code>plot_multi_subj_boxplot(dat_list, subjid = "subjid", width = 800,
-  height = 500)</code></pre>
+<pre class="r"><code>plot_multi_subj_boxplot(dat_list, width = 800, height = 500)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -4968,12 +5235,6 @@ dat_list
 </dt>
 <dd class="rd-dd">
 a list of data frames containing study data
-</dd>
-<dt>
-subjid
-</dt>
-<dd class="rd-dd">
-variable name in <code>dat</code> that contains the subjects identifier
 </dd>
 <dt>
 width
@@ -5006,9 +5267,8 @@ Plot counts by age for a list of studies
 <h4>
 Usage
 </h4>
-<pre class="r"><code>plot_time_count_grid(dat_list, agevar = "agedays",
-  xlab = "Age since birth at examination (days)", width = 845,
-  height = 80)</code></pre>
+<pre class="r"><code>plot_time_count_grid(dat_list, xlab = "Age since birth at examination (days)",
+  width = 845, height = 120, y_margin = 100)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -5018,12 +5278,6 @@ dat_list
 </dt>
 <dd class="rd-dd">
 a list of data frames containing study data
-</dd>
-<dt>
-agevar
-</dt>
-<dd class="rd-dd">
-variable name in <code>dat</code> that contains a measure of the subjects age
 </dd>
 <dt>
 xlab
@@ -5042,6 +5296,12 @@ height
 </dt>
 <dd class="rd-dd">
 height of each panel of the plot in pixels
+</dd>
+<dt>
+y_margin
+</dt>
+<dd class="rd-dd">
+minimum padding for axis tick labels on left
 </dd>
 </dl>
 <h4>
@@ -5138,7 +5398,7 @@ Examples
 </h4>
 <pre class="r"><code>  cppsubj <- by_subject(cpp)
   cppt <- fit_all_trajectories(cppsubj, method = "rlm")
-  cppt <- trscope_trajectories(cppt)</code></pre>
+  cpptr <- trscope_trajectories(cppt)</code></pre>
 </div>
 <div id="trscope_velocities" class="section level2">
 <h2>trscope_velocities</h2>
@@ -5228,7 +5488,7 @@ Divide a data set into subsets by subject
 <h4>
 Usage
 </h4>
-<pre class="r"><code>by_subject(dat, subjid = "subjid")</code></pre>
+<pre class="r"><code>by_subject(dat)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -5238,12 +5498,6 @@ dat
 </dt>
 <dd class="rd-dd">
 data set to divide by subject
-</dd>
-<dt>
-subjid
-</dt>
-<dd class="rd-dd">
-variable name in <code>dat</code> that contains the subjects identifier
 </dd>
 </dl>
 <h4>
@@ -5312,6 +5566,16 @@ Broman, Sarah. “The collaborative perinatal project: an overview.” Handbook 
 Examples
 </h4>
 <pre class="r"><code>head(cpp)</code></pre>
+</div>
+<div id="get_smocc_data" class="section level2">
+<h2>get_smocc_data</h2>
+<h3>
+Get SMOCC data from brokenstick, transformed to be hbgd-compatible
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>get_smocc_data()</code></pre>
 </div>
 <div id="who_coefs" class="section level2">
 <h2>who_coefs</h2>
@@ -5401,104 +5665,6 @@ Usage
 </div>
 <div id="misc" class="section level1">
 <h1>Misc</h1>
-<div id="get_subject_data" class="section level2">
-<h2>get_subject_data</h2>
-<h3>
-Get subject-level or time-varying variables and rows of longitudinal data
-</h3>
-<h4>
-Arguments
-</h4>
-<dl class="rd-dl">
-<dt>
-dat
-</dt>
-<dd class="rd-dd">
-data frame with longitudinal data
-</dd>
-</dl>
-</div>
-<div id="get_time_data" class="section level2">
-<h2>get_time_data</h2>
-<h3>
-Get subject-level or time-varying variables and rows of longitudinal data
-</h3>
-<h4>
-Arguments
-</h4>
-<dl class="rd-dl">
-<dt>
-dat
-</dt>
-<dd class="rd-dd">
-data frame with longitudinal data
-</dd>
-</dl>
-</div>
-<div id="get_data_attributes" class="section level2">
-<h2>get_data_attributes</h2>
-<h3>
-Infer and attach attributes to a longitudinal growth study data set
-</h3>
-<p class="rd-p">
-Infer attributes such as variable types of a longitudinal growth study and add as attributes to the data set.
-</p>
-<h4>
-Usage
-</h4>
-<pre class="r"><code>get_data_attributes(dat, subjid = "subjid", agevars = "agedays",
-  meta = NULL, study_meta = NULL)</code></pre>
-<h4>
-Arguments
-</h4>
-<dl class="rd-dl">
-<dt>
-dat
-</dt>
-<dd class="rd-dd">
-a longitudinal growth study data set
-</dd>
-<dt>
-subjid
-</dt>
-<dd class="rd-dd">
-variable name in <code>dat</code> that contains the subjects identifier
-</dd>
-<dt>
-agevars
-</dt>
-<dd class="rd-dd">
-variable name (or vector of names) that indicates a measure (or measures) of the subjects age
-</dd>
-<dt>
-meta
-</dt>
-<dd class="rd-dd">
-a data frame of meta data about the variables (a row for each variable)
-</dd>
-<dt>
-study_meta
-</dt>
-<dd class="rd-dd">
-a single-row data frame or named list of meta data about the study (such as study description, etc.)
-</dd>
-</dl>
-<h4>
-Details
-</h4>
-<p class="rd-p">
-attributes added: - <code>subjectlevel_vars</code>: vector of names of subject-level variables - <code>timevarying_vars</code>: vector of names of time-varying variables - <code>time_vars</code>: vector of names of measures of age - <code>var_summ</code>: data frame containing variable summaries with columns <code>variable</code>, <code>label</code>, <code>type</code>[subject id, time indicator, time-varying, constant], <code>n_unique</code> - <code>subj_count</code>: data frame of counts of records for each subject with columns <code>subjid</code>, <code>n</code> - <code>n_subj</code>: scalar containing total number of subjects - <code>labels</code> named list of variable labels - either populated by matching names with a pre-set list of labels (see <code><a href=#hbgd_labels>hbgd_labels</a></code>) or from a list provided from the <code>meta</code> argument - <code>study_meta</code>: data frame of meta data (if provided from the <code>study_meta</code> argument) - <code>short_id</code>: scalar containing the short unique identifier for the study (if <code>study_meta</code> is provided)
-</p>
-<h4>
-Examples
-</h4>
-<pre class="r"><code>cpp <- get_data_attributes(cpp)
-str(attributes(cpp))</code></pre>
-<h4>
-See also
-</h4>
-<p><code><a href=#get_data_attributes>get_data_attributes</a></code></p>
-</div>
 <div id="get_x_range" class="section level2">
 <h2>get_x_range</h2>
 <h3>
@@ -5523,46 +5689,6 @@ pad
 </dt>
 <dd class="rd-dd">
 padding factor - this much space as a multiple of the span of the x range will be added to the min and max
-</dd>
-</dl>
-</div>
-<div id="fix_height" class="section level2">
-<h2>fix_height</h2>
-<h3>
-Merge htcm and lencm into one variable
-</h3>
-<h4>
-Usage
-</h4>
-<pre class="r"><code>fix_height(dat, height_var = "htcm", length_var = "lencm",
-  target = "htcm")</code></pre>
-<h4>
-Arguments
-</h4>
-<dl class="rd-dl">
-<dt>
-dat
-</dt>
-<dd class="rd-dd">
-data
-</dd>
-<dt>
-height_var
-</dt>
-<dd class="rd-dd">
-name of height variable
-</dd>
-<dt>
-length_var
-</dt>
-<dd class="rd-dd">
-name of length variable
-</dd>
-<dt>
-target
-</dt>
-<dd class="rd-dd">
-name of target variable to hold the merged variable
 </dd>
 </dl>
 </div>
@@ -5601,7 +5727,7 @@ Get age frequency
 <h4>
 Usage
 </h4>
-<pre class="r"><code>get_agefreq(dat, agevar = "agedays", age_range = NULL)</code></pre>
+<pre class="r"><code>get_agefreq(dat, age_range = NULL)</code></pre>
 <h4>
 Arguments
 </h4>
@@ -5611,12 +5737,6 @@ dat
 </dt>
 <dd class="rd-dd">
 a longitudinal growth study data set
-</dd>
-<dt>
-agevar
-</dt>
-<dd class="rd-dd">
-variable name in <code>dat</code> that contains a measure of the subjects age
 </dd>
 <dt>
 age_range
@@ -5670,6 +5790,27 @@ x
 </dt>
 <dd class="rd-dd">
 vector of data
+</dd>
+</dl>
+</div>
+<div id="get_nadir" class="section level2">
+<h2>get_nadir</h2>
+<h3>
+Get nadir of a growth velocity
+</h3>
+<h4>
+Usage
+</h4>
+<pre class="r"><code>get_nadir(obj)</code></pre>
+<h4>
+Arguments
+</h4>
+<dl class="rd-dl">
+<dt>
+obj
+</dt>
+<dd class="rd-dd">
+object created from <code><a href=#fit_trajectory>fit_trajectory</a></code>
 </dd>
 </dl>
 </div>

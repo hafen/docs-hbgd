@@ -30,9 +30,22 @@ This document provides a walk through of much of the package's functionality, pr
 The hbgd package is not yet on CRAN but can be installed from a CRAN-like repository with the following:
 
 ```r
-options(repos = c(tessera = "http://packages.tessera.io", getOption("repos")))
+options(repos = c(
+  CRAN = "http://cran.rstudio.com/",
+  tessera = "http://packages.tessera.io",
+  BioCsoft = "http://bioconductor.org/packages/3.0/bioc"))
 install.packages("hbgd")
 ```
+
+The Bioconductor repository is added because some of the fitting methods linked to in 'hbgd'  have dependencies on Bioconductor packages.
+
+<!-- Note that some of the package dependencies for hbgd rely on Bioconductor packages, and you may need to install Bioconductor to get a successful install.  If this is the case, you need to run the following:
+
+```r
+source("http://bioconductor.org/biocLite.R")
+biocLite("Rgraphviz")
+```
+ -->
 
 Once the package is is installed, you simply need to load it:
 
@@ -56,22 +69,205 @@ head(cpp)
 
 The column names are illustrative of "standards" that the package is designed to deal with, for example `subjid` for the subject ID, `wtkg` for weight in kilograms, `htcm` for height in centimeters, etc.
 
-While it is not required for data sets to have these variable names, it is easiest to deal with the data when it is in this format, as these names are used to get data from the WHO growth standards, associate with variable labels / descriptions, etc.
-
 ## Variable labels ##
 
-A full list of recognized variable names and associated labels is available in a named list that comes with the package, `hbgd_labels`, also available as a data frame, `hbgd_labels_df`:
+A full list of recognized variable names and associated labels is available in a named list that comes with the package, `hbgd_labels`, also available as a data frame, `hbgd_labels_df`.  A convenience function `r rdl(view_variables())` will launch an interactive table that will allow you to explore the available variables.
 
 ```{r hbgd_labels, eval=TRUE, echo=TRUE, message=FALSE}
-DT::datatable(hbgd_labels_df, rownames = FALSE)
+view_variables()
 ```
 
 While you can use most of the functionality of this package with data in your own format, it will be most convenient to transform your variable names to match those found `hbgd_labels`.
 
-<!-- ## Dealing with your own data ##
+## Data checking ##
 
-The functions in this package were designed to work with a specific format of longitudinal data we are working with that has been curated and been through a QC and standardization process.  By "format", we simply mean that there is a standardized form for variable names and types.
- -->
+The functions in this package were designed to work on data with specific variable names and types.  Instead of trying to accommodate every possible dataset one might bring to use with the package, a thorough data checking method, `r rdl(check_data())` is provided with the package that helps guide the user to transform their data into a conforming format.
+
+To get a feel for what the output of this function looks like and what it checks, we can try it on our cpp dataset:
+
+```{r cpp_check1, eval=TRUE, echo=TRUE, message=FALSE}
+check_data(cpp, has_hcir = FALSE)
+```
+
+```
+Checking if data is a data frame... ✓
+Checking variable name case... ✓
+Checking for variable 'subjid'... ✓
+Checking for variable 'agedays'... ✓
+Checking for variable 'sex'... ✓
+Checking values of variable 'sex'... ✓
+Checking for variable 'lencm'... ✓
+Checking for variable 'htcm'... ✓
+Checking for variable 'wtkg'... ✓
+Checking for both 'lencm' and 'htcm'...
+Checking z-score variable 'haz' for height... ✓
+Checking z-score variable 'waz' for weight... ✓
+Checking to see if data is longitudinal... ✓
+Checking names in data that are not standard 'hbgd' variables...
+All checks passed!
+As a final check, please ensure the units of measurement match
+the variable descriptions (e.g. age in days, height in centimeters, etc.).
+```
+
+We specify `has_hcir = FALSE` because this dataset does not have any head circumference data.
+
+From the output, we see that all checks pass, and it reminds us to make sure our variables are in the correct units.  Since we are shipping the cpp data with the package, we of course have made sure that it conforms with the required format.
+
+#### SMOCC data ####
+
+Let's now get a more realistic feel for what we might encounter from `r rdl(check_data())` when we use an outside dataset.  The 'brokenstick' package which comes as a dependency to 'hbgd' has a nice example data set from the SMOCC study (see `?brokenstick::smocc.hgtwgt` for more details).  Let's check it:
+
+```{r smc_check1, eval=TRUE, echo=TRUE, message=FALSE}
+smc <- brokenstick::smocc.hgtwgt
+head(smc)
+check_data(smc, has_hcir = FALSE)
+```
+
+```
+Checking if data is a data frame... ✓
+Checking variable name case... ✓
+Checking for variable 'subjid'... ✗
+  Variable 'subjid' was not found in the data.
+  Closest matches (with index): id (2), bw (9)
+  Definition: Subject ID
+  This variable is required.
+  Please create or rename the appropriate variable.
+  To rename, choose the appropriate index i and:
+  names(dat)[i] <- 'subjid'
+Checking for variable 'agedays'... ✗
+  Variable 'agedays' was not found in the data.
+  Closest matches (with index): age (5), ga (8)
+  Definition: Age since birth at examination (days)
+  This variable is required.
+  Please create or rename the appropriate variable.
+  To rename, choose the appropriate index i and:
+  names(dat)[i] <- 'agedays'
+Checking for variable 'sex'... ✓
+Checking values of variable 'sex'... ✗
+  All values of variable 'sex' must be 'Male' and 'Female'.
+Checking for variable 'lencm'...
+  Variable 'lencm' was not found in the data.
+  Closest matches (with index): nrec (4), rec (3)
+  Definition: Recumbent length (cm)
+  This variable is not required but if it exists in the data
+  under a different name, please rename it to 'lencm'.
+Checking for variable 'htcm'...
+  Variable 'htcm' was not found in the data.
+  Closest matches (with index): hgt (10), hgt.z (12)
+  Definition: Standing height (cm)
+  This variable is not required but if it exists in the data
+  under a different name, please rename it to 'htcm'.
+Checking for variable 'wtkg'...
+  Variable 'wtkg' was not found in the data.
+  Closest matches (with index): wgt (11), hgt (10)
+  Definition: Weight (kg)
+  This variable is not required but if it exists in the data
+  under a different name, please rename it to 'wtkg'.
+Checking for both 'lencm' and 'htcm'...
+Checking names in data that are not standard 'hbgd' variables...
+  The following variables were found in the data:
+  src, id, rec, nrec, age, etn, ga, bw, hgt, wgt, hgt.z
+  Run view_variables() to see if any of these can be mapped
+  to an 'hbgd' variable name.
+Some checks did not pass - please take action accordingly.
+```
+
+We see that several checks didn't pass.  The function tries to provide as much guidance as possible to fix the issues.  *Note that it does not make any changes to the data - it only provides guidance*.  We see that there is a column in the data, `id`, which has a name similar to `subjid` that we can guess should be renamed to `subjid`.  We see a similar indication for `agedays`.  It also tells us that it did successfully find a `sex` variable but that the values need to be "Male" and "Female".  Finally, we see that variables `hgt` and `wgt` exist in the data but should be `htcm` and `wtkg` to conform with the package.  Let's set those and re-check the data:
+
+```{r smc_check2, eval=TRUE, echo=TRUE, message=FALSE}
+# fix subjid and agedays names
+names(smc)[2] <- "subjid"
+names(smc)[5] <- "agedays"
+# fix sex variable ("male" -> "Male", "female" -> "Female")
+smc$sex <- as.character(smc$sex)
+smc$sex[smc$sex == "male"] <- "Male"
+smc$sex[smc$sex == "female"] <- "Female"
+# fix htcm and wtkg names
+names(smc)[10] <- "htcm"
+names(smc)[11] <- "wtkg"
+
+check_data(smc, has_hcir = FALSE)
+```
+
+```
+Checking if data is a data frame... ✓
+Checking variable name case... ✓
+Checking for variable 'subjid'... ✓
+Checking for variable 'agedays'... ✓
+Checking for variable 'sex'... ✓
+Checking values of variable 'sex'... ✓
+Checking for variable 'lencm'...
+  Variable 'lencm' was not found in the data.
+  Closest matches (with index): nrec (4), rec (3)
+  Definition: Recumbent length (cm)
+  This variable is not required but if it exists in the data
+  under a different name, please rename it to 'lencm'.
+Checking for variable 'htcm'... ✓
+Checking for variable 'wtkg'... ✓
+Checking for both 'lencm' and 'htcm'...
+Checking z-score variable 'haz' for height...
+  Could not find height z-score variable 'haz'.
+  If it exists, rename it to 'haz'.
+  If it doesn't exist, create it with:
+  dat$haz <- who_htcm2zscore(dat$agedays, dat$htcm, dat$sex)
+Checking z-score variable 'waz' for weight...
+  Could not find weight z-score variable 'waz'.
+  If it exists, rename it to 'waz'.
+  If it doesn't exist, create it with:
+  dat$waz <- who_wtkg2zscore(dat$agedays, dat$wtkg, dat$sex)
+Checking to see if data is longitudinal... ✓
+Checking names in data that are not standard 'hbgd' variables...
+  The following variables were found in the data:
+  src, rec, nrec, etn, ga, bw, hgt.z
+  Run view_variables() to see if any of these can be mapped
+  to an 'hbgd' variable name.
+All checks passed!
+As a final check, please ensure the units of measurement match
+the variable descriptions (e.g. age in days, height in centimeters, etc.).
+```
+
+Now we see that all critical checks passed, but there are additional messages that give us things to check.  One is that `haz` and `waz` variables corresponding to z-scores for `htcm` and `wtkg` could not be found.  We see that there is a variable `hgt.z` in the data that we should rename to `haz`, but that there is no variable that looks like `waz`.  Also, we followed the guidance and checked the units of the `age` variable we renamed to `agedays` and found that it was in years, so we need to convert it to days.
+
+```{r smc_check3, eval=TRUE, echo=TRUE, message=FALSE}
+names(smc)[12] <- "haz"
+smc$waz <- who_wtkg2zscore(smc$agedays, smc$wtkg, smc$sex)
+smc$agedays <- years2days(smc$agedays)
+
+check_data(smc, has_hcir = FALSE)
+```
+
+```
+Checking if data is a data frame... ✓
+Checking variable name case... ✓
+Checking for variable 'subjid'... ✓
+Checking for variable 'agedays'... ✓
+Checking for variable 'sex'... ✓
+Checking values of variable 'sex'... ✓
+Checking for variable 'lencm'...
+  Variable 'lencm' was not found in the data.
+  Closest matches (with index): nrec (4), rec (3)
+  Definition: Recumbent length (cm)
+  This variable is not required but if it exists in the data
+  under a different name, please rename it to 'lencm'.
+Checking for variable 'htcm'... ✓
+Checking for variable 'wtkg'... ✓
+Checking for both 'lencm' and 'htcm'...
+Checking z-score variable 'haz' for height... ✓
+Checking z-score variable 'waz' for weight... ✓
+Checking to see if data is longitudinal... ✓
+Checking names in data that are not standard 'hbgd' variables...
+  The following variables were found in the data:
+  src, rec, nrec, etn, ga, bw
+  Run view_variables() to see if any of these can be mapped
+  to an 'hbgd' variable name.
+All checks passed!
+As a final check, please ensure the units of measurement match
+the variable descriptions (e.g. age in days, height in centimeters, etc.).
+```
+
+After the final check, it looks like we are in good shape.  It is giving us messages about a `lencm` variable that is not found (typically length is reported for the first 2 years, then height, but the 'hbgd' package looks at the combination of the two as `htcm`).  It also gives a message about variables found in the data set that are not known variables to 'hbgd'.
+
+Once one is familiar with the standards for data in the package, datasets can be curated to meet these standards beforehand to avoid manual checks like this.
 
 ## Dealing with longitudinal data ##
 
@@ -389,7 +585,7 @@ Here's an example plotting the same plot as the lattice plot, transforming `aged
 
 ```{r who_bokeh, eval=TRUE, echo=TRUE, message=FALSE}
 library(rbokeh)
-figure(xlab = "Age (years)", ylab = "wgkt") %>%
+figure(xlab = "Age (years)", ylab = "wtkg") %>%
   ly_who(x = seq(0, 2600, by = 10), y_var = "wtkg",
     sex = "Male", x_trans = days2years) %>%
   ly_points(days2years(agedays), wtkg,
@@ -512,7 +708,7 @@ We would like to add in more plot methods that provide greater detail about a si
 
 # Modeling Methods #
 
-An important necessity for more meaningful analyses beyond summaries or looking at the raw data is to fit models to individual subject's growth trajectories and investigate the results.
+An important necessity for more meaningful analyses and visualizations beyond summaries or looking at the raw data is to fit models to individual subject's growth trajectories and investigate the results.
 
 There are many reasons we may want to fit growth trajectories:
 
@@ -522,36 +718,102 @@ There are many reasons we may want to fit growth trajectories:
 - identify data that deviates from what we perceive as regular growth (noisy around the fitted trajectory, large jumps, etc.)
 - visualization
 
-This package provides a pluggable framework for trajectory modeling techniques.  The analyst can quickly swap between different methods and parameter settings and have access to visualizations and diagnostics all through the same interface.  The ultimate goal is to provide a class of methods with recommended default choices for different situations (we have found that different data situations - sparse, noisy, etc. - can necessicate different methods) and provide good parameter defaults for each method.  As a start, we have integrated the following methods: functional smoothing using `smooth.basisPar()` in the `fda` package and `face.sparse()` in the `face` package, robust loess smoothing via `loess()`, splines via `gam()`, robust linear models via `rlm()`.  New modeling techniques can be plugged in easily, and even outputs from programs like nonmem can easily be plugged in.
+This package provides a pluggable framework for trajectory modeling techniques.  The analyst can quickly swap between different methods and parameter settings and have access to visualizations and diagnostics all through the same interface.  The ultimate goal is to provide a class of methods with recommended default choices for different situations (we have found that different data situations - sparse, noisy, etc. - can necessitate different methods) and provide good parameter defaults for each method.
 
-Any good package that is intended for others to use on new data sets will provide good defaults.  More work is needed in coming to a concensus on the best default choices.  Currently, some considerations that need to be finalized, along with the current default choices, are:
+The methods that have been integrated so far fall into two categories: methods that fit trajectories on a subject-specific basis (such as loess smoothing of each subject's data) and methods that borrow strength across all subjects.  The following methods are available:
 
-- the best default smoothing method ("fda" currently is the default)
+**Subject-specific:**
+
+  + **fda**: uses `smooth.basisPar()` in the [fda](https://cran.r-project.org/web/packages/fda/index.html) package
+  + **gam**: uses `gam()` in the [mgcv](https://cran.r-project.org/web/packages/mgcv/index.html) package
+  + **loess**: uses `loess()` in the base R stats package
+  + **smooth.spline**: uses `smooth.spline()` in the base R stats package
+  + **rlm**: uses quadratic (by default) `rlm()` robust linear model in the base R MASS package
+
+**Strengh-borrowing:**
+
+  + **brokenstick**: uses Stef van Buuren's broken stick approach
+  + **face**: uses Luo Xiao et al.'s [FACE approach](http://arxiv.org/abs/1306.5718)
+  + **lwmod**:  uses Laird & Ware linear or quadratic mixed effects model using `lmer()` in the [lme4](https://cran.r-project.org/web/packages/lme4/index.html) package
+  + **sitar**: uses the SITAR method implemented in the [sitar](https://cran.r-project.org/web/packages/sitar/index.html) package
+  + **wand**: uses a spline-based approach by Matt Wand
+
+New modeling techniques can be plugged in fairly easily, and outputs from programs like nonmem could potentially be plugged in.
+
+Any good package that is intended for others to use on new data sets will provide good defaults.  More work is needed in coming to a consensus on the best default choices.  Currently, some considerations that need to be finalized, along with the current default choices, are:
+
+- the best default smoothing method
 - the best default smoothing parameters for the best smoothing method (each method has defaults, except loess which does an AIC-like selection)
-- the choice of modeling the raw growth measurements vs. fitting the WHO-transformed z-scores
-- the choice of transformation of both the x-axis variable (age) and measurement variable (log(x + 1) is the current default for both when modeling raw measurements - the identity is the current default when fitting on the z-score scale)
+- the choice of modeling the raw growth measurements vs. fitting the WHO-transformed z-scores (consensus seems to be fit on the z-score scale)
 
-To assist with making these choices, this package provides a collection visualization methods to help assess the goodness-of-fit of each approach.  See the [trelliscope](#trelliscope) section for more details.  We plan to add additional diagnostics / model selection functionality beyond visualization as well.
+To assist with making these choices, this package provides a collection visualization methods to help assess the goodness-of-fit of each approach.  See the [Trelliscope](#trelliscope) section and the ["Assessing fits with holdouts"](#assessing_fits_with_holdouts) section for more details.
+
+## Fitting a model to a data set
+
+The first step in getting trajectory fits for a data set is to call the `r rdl(get_fit())` function, which returns a model and other information with which we can later extract fits for individual subjects.
+
+To get a model fit, at a minimum you need to supply a data argument, the name of the y variable, `y_var`, and the `method`.  Here we will use a subset of the SMOCC data and apply a model of the height-for-age z-score, `"haz"` vs. the subject's age (the default for `x_var`) using the `"face"` model.
+
+
+```{r fit5a, eval=FALSE, echo=FALSE}
+# manual cache
+smc <- get_smocc_data()[1:2000,]
+facefit <- get_fit(smc, y_var = "haz", method = "face")
+smc_tr <- fit_all_trajectories(smc, facefit)
+bsfit <- get_fit(smc, y_var = "haz", method = "brokenstick")
+smc_tr_bs <- fit_all_trajectories(smc, bsfit)
+
+set.seed(1234)
+smc <- add_holdout_ind(smc)
+facefit_hold <- get_fit(smc, y_var = "haz", method = "face", holdout = TRUE)
+smc_tr_face_hold <- fit_all_trajectories(smc, facefit_hold)
+bsfit_hold <- get_fit(smc, y_var = "haz", method = "brokenstick", holdout = TRUE)
+smc_tr_bs_hold <- fit_all_trajectories(smc, bsfit_hold)
+
+save(facefit, smc_tr, bsfit, smc_tr_bs, facefit_hold,
+  smc_tr_face_hold, bsfit_hold, smc_tr_bs_hold,
+  file = "docs/cache/smc_fits.Rdata")
+```
+
+```{r fit5b, eval=TRUE, echo=FALSE}
+load("cache/smc_fits.Rdata")
+```
+
+```{r fit_face1, message = FALSE}
+# get first 2k rows of SMOCC data
+smc <- get_smocc_data()[1:2000,]
+```
+
+```{r fit_face2, eval = FALSE}
+facefit <- get_fit(smc, y_var = "haz", method = "face")
+```
+
+
+This returns an object that we can use to obtain individual subject fits as we will see in the next section.
+
+If you don't know what methods are available, you can call:
+
+```{r avail_methods}
+get_avail_methods()
+```
 
 ## Fitting individual trajectories ##
 
-Fitting the growth trajectory for an individual is possible using the `r rdl(fit_trajectory())` function.
+Once we have a model fit object, getting the fitted growth trajectory for an individual is possible using the `r rdl(fit_trajectory())` function.
 
 To fit a trajectory, at a minimum you need to supply a data argument and the name of the y variable.
 
 ```{r fit_traj, eval=TRUE, echo=TRUE}
-fit <- fit_trajectory(subset(cpp, subjid == 2), y_var = "haz", method = "fda")
+fit <- fit_trajectory(subset(smc, subjid == 10001), facefit)
 ```
 
-Here in addition to the data and `y_var`, we also specified `method = "fda"`.  This is the default fitting method, so we did not need to specify it, but to specify some other method, you would simply change this setting.  You can also specify the name of the x variable if your x variable is not "agedays", which is the default.
-
-We'll talk about some of the other parameters in a minute, but let's first look at what the output looks like.  Our `fit` object is a list with the following elements:
+Let's first look at what the output looks like.  Our `fit` object is a list with the following elements:
 
 ```{r fit_traj2, eval=TRUE, echo=TRUE}
 names(fit)
 ```
 
-You can investigate what each one of these looks like on your own, but here is a desription of what each of these represents:
+You can investigate what each one of these looks like on your own, but here is a description of what each of these represents:
 
 - `xy`: a data frame with columns "x" and "y" (and optionally "z" if the variable could be converted using the WHO growth standard) of the original data being fit
 - `fit`: a vector of the fitted values
@@ -585,7 +847,7 @@ lines(fit$fitgrid$x, fit$fitgrid$y)
 There are also several built-in plot methods.  One is simply `r rdl(plot.fittedTrajectory())`, which plots the original data points, the fitted trajectory, and the checkpoints superposed over the WHO growth standard:
 
 ```{r fit_plot2, eval=TRUE, echo=TRUE, message = FALSE}
-plot(fit, who_range = c(0, 2560), hover = c("agedays", "htcm"))
+plot(fit, x_range = c(0, 755), hover = c("agedays", "htcm"))
 ```
 
 Note that even though we fit on the z-scale, `r rdl(plot.fittedTrajectory())` plots the raw trajectory.
@@ -595,7 +857,7 @@ You can specify variables to show when the raw data points are hovered.  The che
 You can also plot the fits on the "d-scale", which is basically taking the raw fitted curve and subtracting the WHO growth standard using `center = TRUE`:
 
 ```{r fit_plot3, eval=TRUE, echo=TRUE, message = FALSE}
-plot(fit, who_range = c(0, 2560), hover = c("agedays", "htcm"), center = TRUE)
+plot(fit, x_range = c(0, 755), hover = c("agedays", "htcm"), center = TRUE)
 ```
 
 These are height-for-age difference (HAD) scores [see here](http://www.ifpri.org/blog/once-stunted-always-stunted-whats-catch-growth).
@@ -606,7 +868,10 @@ We may also want to plot the data on the z-score scale.  If the y-variable speci
 plot_z(fit, hover = c("agedays", "wtkg"))
 ```
 
-A line is automatically added that indicates the time and magnitude of the first observed "nadir", or bottom of a dip in the z-score fit.  From looking at this plot, one would speculate that we are excessively overfitting and the subject's trajectory most-likely did not look like that.  This is a quick example of how important it is to visualize the fitted trajectory.
+<!-- A line is automatically added that indicates the time and magnitude of the first observed "nadir", or bottom of a dip in the z-score fit.
+ -->
+
+From looking at this plot, one would speculate that we are overfitting a bit.  This is a quick example of how important it is to visualize the fitted trajectory.
 
 Also, the fitting method automatically computes the velocity of the fit and if applicable the z-score fit.  We can plot these with:
 
@@ -620,26 +885,26 @@ And for the z-score scale:
 plot_zvelocity(fit)
 ```
 
-There are some artificial bumps in the velocities due to jumps in the WHO standard having to do with the transition from `lencm` to `htcm` and the change in standard data at 5 years.
+There are some artificial bumps in the velocities due to jumps in the WHO standard having to do with the transition from `lencm` to `htcm` and the change in standard data at 2 and 5 years - these are removed by not showing the velocity for a short time period around these times.
 
 ### Additional parameters
 
-Additional parameters can be applied to `r rdl(fit_trajectory())` for additional control over the output, such as controlling the gridpoints for the grid fit, setting the checkpoints, setting the z-score bins for the checkpoint z-score categorizations, transformations to be applied to the x and y variables prior to fitting, and any smoothing parameters you wish to pass on to the fitting method.  See the function reference for `r rdl(fit_trajectory())` for more details.
+Additional parameters can be applied to `r rdl(get_fit())` for additional control over the output, such as controlling the grid points for the grid fit, setting the checkpoints, setting the z-score bins for the checkpoint z-score categorizations, transformations to be applied to the x and y variables prior to fitting, and any smoothing parameters you wish to pass on to the fitting method.  See the function reference for `r rdl(get_fit())` for more details.
 
 ### Fitting on the z-score scale
 
-Just a reminder of how `r rdl(fit_trajectory())` works when fitting on the raw vs. z-scale.  Often we may want to apply our trajectory fitting on the z-score scale.  As seen in the example above, we can do this by simply providing the z-score version of the variable as `y_var` (such as "waz" instead of "wtkg").  An important thing to remember about this is that `r rdl(fit_trajectory())` will automatically detect that this is a z-score variable and after doing the fitting, it will transform the results such that the object returned will have the same structure as those we get when we provide a raw variable for fitting.  In other words, your "y" values in the result object will be on the original scale and the "z" values in the result object will be on the z-score scale - the only difference being that the fitting was done on the z-score scale.
+Just a reminder of how `r rdl(get_fit())` works when fitting on the raw vs. z-scale.  Often we may want to apply our trajectory fitting on the z-score scale.  As seen in the example above, we can do this by simply providing the z-score version of the variable as `y_var` (such as "waz" instead of "wtkg").  An important thing to remember about this is that `r rdl(fit_trajectory())` will automatically detect that a z-score variable has been used in the fit and after doing the fitting, it will transform the results such that the object returned will have the same structure as those we get when we provide a raw variable for fitting.  In other words, the "y" values in the result object will be on the original scale and the "z" values in the result object will be on the z-score scale - the only difference being that the fitting was done on the z-score scale.
 
-### Why use fit_trajectory
+### Why use get_fit?
 
-In many cases, you may want to simply run your own fitting method on the data and not use `r rdl(fit_trajectory())`.  This is completely fine.  The only things `r rdl(fit_trajectory())` offers on top of doing it yourself are the following:
+In many cases, you may want to simply run your own fitting method on the data and not use `r rdl(get_fit())`.  This is completely fine.  The only things `r rdl(get_fit())` offers on top of doing it yourself are the following:
 
 - getting the fit over a grid of points for plotting
 - allowing specification of growth "checkpoints" for comparisons across subjects
 - dealing with fitting on the z-score scale
 - providing a self-contained output with data that can be used as a foundation for other methods to build on top of (a few of which we will see later)
 
-We've tried to make `fit_trajectory()` as flexible as possible for fine control over model parameters, and have also made it fairly straightforward to plug in a new fitting method (see [Plugging in a new fitting method](#plugging-in-a-new-fitting-method) for more details) so that this interface is easy to use regardless of your goals.  If you find it not flexible enough or have some ideas to improve it, please [http://github.com/hafen/hbgd/issues](file an issue).
+We've tried to make `r rdl(get_fit())` as flexible as possible for fine control over model parameters, and have also made it fairly straightforward to plug in a new fitting method (see [Plugging in a new fitting method](#plugging-in-a-new-fitting-method) for more details) so that this interface is easy to use regardless of your goals.  If you find it not flexible enough or have some ideas to improve it, please [http://github.com/hafen/hbgd/issues](file an issue).
 
 ### Trajectory checkoints ###
 
@@ -649,145 +914,99 @@ Consider the following questions:
 
 - What percentage of children in this study were stunted at age 2?
 - Is variable x different for children who were stunted (height z-score < -2) at age 1 but not stunted at age 2 vs. children who remained stunted at age 2?
-- What is the distrubution of growth velosity at age 1?
+- What is the distrubution of growth velocity at age 1?
 - etc.
 
-Many research questions insist that we be able to know a child's trajectory at a specific point in time.  However, most longitudinal growth data sets do not provide data at fixed time points (ages) because this is not how data is collected in real life (we cannot record every child at the exact same ages).
+Many research questions insist that we be able to know a child's trajectory at a specific point in time.  However, most longitudinal growth data sets do not provide data at fixed time points (ages) because this is not how data is collected in real life (we cannot record every child at the exact same age).
 
-To estimate a child's trajectory at specific time points, we do it as part of the trajectory fitting, using the "checkpoint" argument in `r rdl(fit_trajectory())`.  We will see methods below that take the checkpoint output and help us explore differences between children that fall into different categories at different time points.
+To estimate a child's trajectory at specific time points, we do it as part of the trajectory fitting, using the "checkpoint" argument in `r rdl(get_fit())`.  We will see methods below that take the checkpoint output and help us explore differences between children that fall into different categories at different time points.
 
 ## Plugging in a new fitting method
 
-Plugging in a new fitting method is as simple as creating a new function, `fit_method.method_name`.  For example, if I want to add a fitting method called "mymethod", I would create a function `fit_method.mymethod`.  Then it will be available to call using `fit_trajectory(..., method = "mymethod")`.  See the source code for `fit_method.loess` for an example of what inputs your method should take and what outputs it should return.
-
-Limitations: The design of `r rdl(fit_trajectory())` is to fit trajectories is done independently for each subject.  Some methods, like "face", like to see the data for all trajectories at once when fitting the data so that information can be borrowed across all the subjects.  We have provided a workaround for this case, where can first call `r rdl(get_face_fit())` which get the "face" fit object using all the data.  Then you can pass the result from this as a parameter to `r rdl(fit_trajectory())`.  See the help for `r rdl(get_face_fit())` for an example.  Note that a limitation of any approach that needs all the data at once is dealing with larger data sets.
-
-We are working on ways to incorporate these types of fitting methods into the `r rdl(fit_trajectory())` framework.  However, this will not always be possible to accomodate, particularly in the case where we have a very large number of subjects and the only way to feasibly fit trajectories is per-subject.
+Plugging in a new fitting method is as simple as creating a new function, `fit_method.method_name` that returns the right outputs.  For example, if I want to add a fitting method called "mymethod", I would create a function `fit_method.mymethod`.  Then it will be available to call using `fit_trajectory(..., method = "mymethod")`.  See the source code for `fit_method.face` for an example of what inputs your method should take and what outputs it should return.
 
 ## Fitting all trajectories ##
 
 Typically in a study made up of several subjects, we want to fit growth trajectories for every subject.  A convenience function `r rdl(fit_all_trajectories())` is available to do this.
 
-For example, to fit the weight-for-age trajectory of each subject in the `cpp` data, we can do the following:
-
-```{r fit5a, eval=FALSE, echo=FALSE}
-# manual cache
-cppt <- fit_all_trajectories(cpp, y_var = "haz", z_bins = -2)
-save(cppt, file = "docs/cache/cppt.Rdata")
-```
-
-```{r fit5b, eval=TRUE, echo=FALSE}
-load("cache/cppt.Rdata")
-```
+For example, to fit the height-for-age trajectory of each subject in the SMOCC sample data, we can do the following:
 
 ```{r fit5c, eval=FALSE, echo=TRUE}
-cppt <- fit_all_trajectories(cpp, y_var = "haz", z_bins = -2)
+smc_tr <- fit_all_trajectories(cpp, facefit)
 ```
-
-Note that here we are using the default of checkpoints at ages 1 and 2 years and setting the only z-bin boundary to be at -2, which will create two z-score categories at each checkpoint - stunted or not stunted.  Also, instead of the default "fda", we are using "rlm", which is probably not the most appropriate as it is completely parametric and our growth curves are never that simple, but will suffice for an example.
-
-Additional smoothing parameters can also be applied that will be passed on to the fitting method via `r rdl(fit_trajectory())`.
 
 The output of `r rdl(fit_all_trajectories())` is "distributed data object" or "DDO" - basically a list of trajectory fits for each subject, indexed by a key of the subject's id.  DDOs are constructs from an R package [datadr](http://github.com/tesseradata/datadr) that is part of the [Tessera](http://tessera.io) project.  These objects are the basis for creating Trelliscope displays, and while in this particular example we are working with a small in-memory data set, DDOs are designed to be able to be distributed across many disks on a cluster when dealing with large data sets.  For more information about this type of data structure, see the [documentation for datadr](http://tessera.io/docs-datadr).
 
 To inspect the output of the result of `r rdl(fit_all_trajectories())`:
 
 ```{r fitres, eval=TRUE, echo=TRUE}
-cppt
+smc_tr
 ```
 
-This tells us the result is a distributed data object with 500 subsets (we have 500 subjects).  To inspect one of the subsets:
+This tells us the result is a distributed data object with 211 subsets (we have 211 subjects).  To inspect one of the subsets:
 
 ```{r fit6, eval=TRUE, echo=TRUE}
-str(cppt[[2]], 2)
+str(smc_tr[[1]], 2)
 ```
 
-We see this is a list with an element "key" telling us that the data in this subset corresponds to `subjid=1`.  The "value" element should look familiar as it is simply the output of `r rdl(fit_trajectory())`.
+We see this is a list with an element "key" telling us that the data in this subset corresponds to `subjid=10001`.  The "value" element should look familiar as it is simply the output of `r rdl(fit_trajectory())`.
 
 We can plot the trajectory of this subset as we have seen before for output of `r rdl(fit_trajectory())`:
 
 ```{r fit7, eval=TRUE, echo=TRUE}
-plot(cppt[[2]]$value, hover = c("agedays", "htcm"))
+plot(smc_tr[[1]]$value, hover = c("agedays", "htcm"))
 ```
 
 Note that we can also access subsets by key:
 
 ```{r fit11, eval=TRUE, echo=TRUE}
-plot_z(cppt[["subjid=24"]]$value, hover = c("agedays", "htcm"))
+plot_z(smc_tr[["subjid=10002"]]$value, hover = c("agedays", "htcm"))
 ```
 
 We will see how to plot all of these trajectories and make them available in an interactive viewer in the upcoming [Trelliscope](#trelliscope) section.
 
-# Division Methods #
+## Assessing fits with holdouts ##
 
-Many of the methods in this package rely on splitting the data into pieces and applying methods independently to each piece and then recombining the result in some way that is meaningful for our analysis.  We call this process Divide and Recombine (D&R).  Most often the way we want to divide the data is by `subjectid`, although there are others.
+One way to assess the fit of different methods is to fit the model with one observation held out for each subject.  After fitting we can compute the mean squared difference between the fitted value and the observed value at each holdout point.
 
-As mentioned previously, we use the [datadr](http://github.com/tesseradata/datadr) package to create divisions (this package is a dependency of `hbgd` and is installed with it so there is no need to install `datadr` separately).  We already implicitly created a division by calling `fit_all_trajectories()`.  However, we may want to explicitly create divisions for specific purposes.
+A convenience function for adding a holdout variable to a data set is provided, `r rdl(add_holdout_ind())`.  We can add a holdout indicator to the SMOCC data sample with the following:
 
-Here we show a few kinds of divisions and how to create them, with some additional helper functions that ship with the package.  For more depth on the D&R process and usage of `datadr`, see [here](http://tessera.io/docs-datadr).
-
-## By subject ##
-
-The way to create a division using the `datadr` package
-
-```{r divide1, eval=FALSE, echo=TRUE}
-cppsubj <- divide(cpp, by = "subjid")
+```{r smocc_holdout}
+set.seed(1234)
+smc <- add_holdout_ind(smc)
+head(smc)
 ```
 
-There also is a helper function, `r rdl(by_subject())` that does the same thing and makes sure that additional data attributes are perserved:
+By defualt, `r rdl(add_holdout_ind())` will hold out a random observation.  If we specify `random = FALSE`, it will hold out the last observation.
 
-```{r divide2a, eval=FALSE, echo=FALSE}
-# manual caching
-cppsubj <- by_subject(cpp)
-save(cppsubj, file = "docs/cache/cppsubj.Rdata")
+To apply a fitting method honoring the new holdout variable, we simply set `holdout = TRUE` in our call to `r rdl(get_fit())`.  Let's do this for "face" and "brokenstick".
+
+```{r smocc_holdout2, eval=FALSE}
+facefit_hold <- get_fit(smc, y_var = "haz", method = "face", holdout = TRUE)
+bsfit_hold <- get_fit(smc, y_var = "haz", method = "brokenstick", holdout = TRUE)
 ```
 
-```{r divide2b, eval=TRUE, echo=FALSE}
-load("cache/cppsubj.Rdata")
+We can now apply the fit to each subject.
+
+```{r smocc_holdout3, eval=FALSE}
+smc_tr_face_hold <- fit_all_trajectories(smc, facefit_hold)
+smc_tr_bs_hold <- fit_all_trajectories(smc, bsfit_hold)
 ```
 
-```{r divide2c, eval=FALSE, echo=TRUE}
-cppsubj <- by_subject(cpp)
+Finally, we can compute the MSE values for each fit with a convenience function `r rdl(get_fit_holdout_mse())` (this can of course be done manually as well).
+
+```{r smocc_holdout4, message = FALSE}
+get_fit_holdout_mse(smc_tr_face_hold)
+get_fit_holdout_mse(smc_tr_bs_hold)
 ```
 
-We can use this as an input to `r rdl(fit_all_trajectories())` (if we send in the `cpp` data frame, it will automatically first compute the division for us).  Additionally, we can do other D&R operations.  For example, if we want to compute the number of rows in the data set for each subject and bind those results into a single data frame, we can do the following:
+For this case, face has a better MSE than brokenstick, however as we will see in the Trelliscope displays below, when visually comparing the fits, the brokenstick method seems to be less overfit.
 
-```{r divide3, eval=TRUE, echo=TRUE, message=FALSE}
-head(
-cppsubj %>%
-  addTransform(function(x) nrow(x)) %>%
-  recombine(combRbind))
-```
-
-Again, we refer you to the `datadr` [documentation](http://tessera.io/docs-datadr) to better understand these kinds of operations and other operations you can do.
-
-## By trajectory checkpoints ##
-
-Another useful and slightly more complicated division we might want to obtain is a partitioning of each subject's data according to the location of their trajectory at specified checkpoints.  This can be very useful, for example, when trying to make comparisons between children who were stunted or not at, say, ages 1 and 2 years.
-
-Below is an example of a function `r rdl(by_trajectory_checkpoints())` that takes as an input the output of `r rdl(fit_all_trajectories())` and groups the data for each subject according to the specified checkpoint locations and z-score bins.  In this example, the checkpoints are at 1 and 2 years and the z-score bins are <-2 (stunted) and >-2 (not stunted).  We are using the `cppt` object we computed [previously](#fitting-all-trajectories).
-
-```{r fit8, eval=TRUE, echo=TRUE}
-cppcp <- by_trajectory_checkpoints(cppt)
-# look at result
-cppcp
-```
-
-We see this is a "distributed data frame" (DDF) - a special kind of DDO where each subset is a data frame.  It has 3 subsets.  We can look at the keys for these subsets with:
-
-```{r fit9, eval=TRUE, echo=TRUE}
-getKeys(cppcp)
-```
-
-Thus we see subset 1 is "not stunted at 1 year, stunted at 2 years", etc.  Now we can investigate the data for the subjects in each subset for further exploration, analyses, or visualization.
-
-```{r fit10, eval=TRUE, echo=TRUE}
-head(cppcp[[1]]$value)
-```
+This method can be used to explore different parameter choices within one fitting method or multiple fitting methods across the same or multiple data sets.
 
 # Trelliscope #
 
-A useful approach to visualize the outputs of per-subject trajectory fits is to create Trelliscope displays.  You can learn more about Trelliscope [here]().  The `trelliscope` R package is a dependency of `hbgd` and creates a [Trellis]()-style display, where each subset of a data set is plotted in a single panel and the panels are arranged in a grid of rows and columns.  What distinguishes Trelliscope from Trellis Display is the ability to create Trellis displays with a potentially extremely large number of subsets.  To help the user navigate the space of many panels, the user can specify "cognostics", or metrics that capture something interesting about each subset.
+A useful approach to visualize the outputs of per-subject trajectory fits is to create Trelliscope displays.  You can learn more about Trelliscope [here](http://tessera.io/docs-trelliscope/).  The `trelliscope` R package is a dependency of `hbgd` and creates a [Trellis](http://polisci.msu.edu/jacoby/uic/manuscripts/95.8.color.pdf)-style display, where each subset of a data set is plotted in a single panel and the panels are arranged in a grid of rows and columns.  What distinguishes Trelliscope from Trellis Display is the ability to create Trellis displays with a potentially extremely large number of subsets.  To help the user navigate the space of many panels, the user can specify "cognostics", or metrics that capture something interesting about each subset.
 
 We won't go too much more into the details of Trelliscope here, but provide a few examples.  First, there are a few built-in methods that easily create Trelliscope displays from the resulting object of `r rdl(fit_all_trajectories())`.  These methods have default functions for what to plot and what to use as cognostics.  Also, we provide an example of how to create your own custom Trelliscope display.
 
@@ -796,12 +1015,12 @@ We won't go too much more into the details of Trelliscope here, but provide a fe
 Plot data, WHO standard, and fitted line:
 
 ```{r trscope1, eval=FALSE, echo=TRUE}
-trscope_trajectories(cppt)
+trscope_trajectories(smc_tr)
 ```
 Plot data, WHO standard, and fitted line:
 
 ```{r trscope2, eval=FALSE, echo=TRUE}
-trscope_trajectories(cppt, center = TRUE)
+trscope_trajectories(smc_tr, center = TRUE)
 ```
 
 When centering height around the WHO median, we are plotting the [HAD]((http://www.ifpri.org/blog/once-stunted-always-stunted-whats-catch-growth)).
@@ -809,28 +1028,42 @@ When centering height around the WHO median, we are plotting the [HAD]((http://w
 Plot data, WHO standard, and fitted line on z-scale:
 
 ```{r trscope3, eval=FALSE, echo=TRUE}
-trscope_trajectories(cppt, z = TRUE)
+trscope_trajectories(smc_tr, z = TRUE)
 ```
 
 Plot fit velocities:
 
 ```{r trscope4, eval=FALSE, echo=TRUE}
-trscope_velocities(cppt)
+trscope_velocities(smc_tr)
 ```
 
 Plot z-score fit velocities:
 
 ```{r trscope5, eval=FALSE, echo=TRUE}
-trscope_velocities(cppt, z = TRUE)
+trscope_velocities(smc_tr, z = TRUE)
 ```
+
+## Comparing fitting methods ##
+
+One useful feature of Trelliscope is the ability to compare fits across different methods.  For example, suppose we wish to fit the broken stick method and compare the fitted values visually.
+
+We can get the broken stick fit and make a Trelliscope display of the fit on the z-score scale with a few simple commands:
+
+```{r trscope6, eval=FALSE}
+bsfit <- get_fit(smc, y_var = "haz", method = "brokenstick")
+smc_tr_bs <- fit_all_trajectories(smc, bsfit)
+trscope_trajectories(smc_tr_bs, z = TRUE)
+```
+
+This will add a new Trelliscope display to our list of displays.  If we now open up the Trelliscope viewer, we can select, for example the display titled "htcm_vs_agedays_face_ztrajectory" and once it is opened, we can click on "Related Displays" on the left sidebar and then scroll and select "htcm_vs_agedays_brokenstick_ztrajectory".  Now for each subject we will see the two different fits side-by-side.
 
 ## Creating your own ##
 
-See the [Trelliscope docs](http://tessera.io/docs-trelliscope) for more information.  Here is a quick example.  Suppose we want to make a trellisope display of the residuals.  We simply need to grab one subset of the data, create a panel function on that subset that work, and then apply it to the entire `cppt` data using `makeDisplay()`.  More explanation will be added here later.
+See the [Trelliscope docs](http://tessera.io/docs-trelliscope) for more information.  Here is a quick example.  Suppose we want to make a Trelliscope display of the residuals.  We simply need to grab one subset of the data, create a panel function on that subset that work, and then apply it to the entire `smc_tr` data using `makeDisplay()`.  More explanation will be added here later.
 
-```{r trscope6, eval=FALSE, echo=TRUE}
+```{r trscope7, eval=FALSE, echo=TRUE}
 # get a subset
-x <- cppt[[2]]$value
+x <- smc_tr[[2]]$value
 
 # create a panel funciton
 panel_fn <- function(x) {
@@ -857,12 +1090,65 @@ cog_fn <- function(x) {
 cog_fn(x)
 
 # make the display
-makeDisplay(cppt,
+makeDisplay(smc_tr,
   name = "residuals",
   panelFn = panel_fn,
   cogFn = cog_fn
 )
 ```
+
+# Division Methods #
+
+Many of the methods in this package rely on splitting the data into pieces and applying methods independently to each piece and then recombining the result in some way that is meaningful for our analysis.  We call this process Divide and Recombine (D&R).  Most often the way we want to divide the data is by `subjectid`, although there are others.
+
+As mentioned previously, we use the [datadr](http://github.com/tesseradata/datadr) package to create divisions (this package is a dependency of `hbgd` and is installed with it so there is no need to install `datadr` separately).  We already implicitly created a division by calling `r rdl(fit_all_trajectories())`.  However, we may want to explicitly create divisions for specific purposes.
+
+Here we show a few kinds of divisions and how to create them, with some additional helper functions that ship with the package.  For more depth on the D&R process and usage of `datadr`, see [here](http://tessera.io/docs-datadr).
+
+## By subject ##
+
+The way to create a division using the `datadr` package
+
+```{r divide1, eval=TRUE, echo=TRUE, message = FALSE}
+smc_subj <- divide(smc, by = "subjid")
+```
+
+There also is a helper function, `r rdl(by_subject())` that does the same thing and makes sure that additional data attributes are perserved:
+
+```{r divide2c, eval=FALSE, echo=TRUE}
+smc_subj <- by_subject(smc)
+```
+
+We can use this as an input to `r rdl(fit_all_trajectories())` (if we send in the SMOCC data frame, it will automatically first compute the division for us).  Additionally, we can do other D&R operations.  For example, if we want to compute the number of rows in the data set for each subject and bind those results into a single data frame, we can do the following:
+
+```{r divide3, eval=TRUE, echo=TRUE, message=FALSE}
+head(
+smc_subj %>%
+  addTransform(function(x) nrow(x)) %>%
+  recombine(combRbind))
+```
+
+Again, we refer you to the `datadr` [documentation](http://tessera.io/docs-datadr) to better understand these kinds of operations and other operations you can do.
+
+## By trajectory checkpoints ##
+
+Another useful and slightly more complicated division we might want to obtain is a partitioning of each subject's data according to the location of their trajectory at specified checkpoints.  This can be very useful, for example, when trying to make comparisons between children who were stunted or not at, say, ages 1 and 2 years.
+
+Below is an example of a function `r rdl(by_trajectory_checkpoints())` that takes as an input the output of `r rdl(fit_all_trajectories())` and groups the data for each subject according to the specified checkpoint locations and z-score bins.  In this example, the checkpoints are at 1 and 2 years and the z-score bins are <-2 (stunted) and >-2 (not stunted).  We are using the `smc_tr` object we computed [previously](#fitting-all-trajectories).
+
+```{r fit8, eval=TRUE, echo=TRUE}
+smc_cp <- by_trajectory_checkpoints(smc_tr)
+# look at result
+smc_cp
+```
+
+We see this is a "distributed data frame" (DDF) - a special kind of DDO where each subset is a data frame.  This only has one subset.  We can look at the key for this subset with:
+
+```{r fit9, eval=TRUE, echo=TRUE}
+getKeys(smc_cp)
+```
+
+Since by default out only checkpoint cutoff is at `z = -2` with checkpoints at 1 and 2 years, we are breaking our data into subsets based on which category the subject is in at each checkpoint time.  For the SMOCC sample, it turns out that every subject we are looking at is not stunted at years 1 and 2.  A more diverse data set would potentially yield a division with up to 4 subsets for stunted / not-stunted at years 1 and 2.  In that case, we can use this division to make plots of differences in variables between the different checkpoint categorizations, etc.
 
 
 <!-- Integrate model outputs from nonmem? -->
@@ -876,11 +1162,7 @@ makeDisplay(cppt,
 Everything we have seen thus far has been applied to a single data set.  This package also has some visualization methods for making visual comparisons between data sets, with plans to add more.
 
 ```{r multidat, eval=TRUE, echo=TRUE, message=FALSE}
-dat_list <- list(
-  cpp1 = cpp[,c(1:5, 7:9, 14:19, 23:32)],
-  cpp2 = cpp[,c(1:5, 11:24)],
-  cpp3 = cpp
-)
+dat_list <- list(cpp = cpp, smc = smc)
 ```
 
 #### Plot matrix comparing variables present in a list of studies
