@@ -5,8 +5,8 @@
   <meta name="generator" content="pandoc" />
 
     <meta name="author" content="Ryan Hafen" />
-  
-  
+
+
   <title>hbgd</title>
 
     <script src="assets/jquery-1.11.1/jquery.min.js"></script>
@@ -30,17 +30,17 @@
   <link href="assets/bokehjs-0.11.1/bokeh.min.css" rel="stylesheet" />
   <script src="assets/bokehjs-0.11.1/bokeh.min.js"></script>
   <script src="assets/rbokeh-binding-0.4.1/rbokeh.js"></script>
-  
-  
-  
-  
-  
+
+
+
+
+
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 </head>
 
 <body>
 
-  
+
   <header class="navbar navbar-white navbar-fixed-top" role="banner" id="header">
     <div class="container">
       <div class="navbar-header">
@@ -122,7 +122,7 @@
         </div>
       </div>
       <div class="col-md-9" id="content-col">
-      
+
 <div id="content-top"></div>
 <div id="intro" class="section level1">
 <h1>Intro</h1>
@@ -872,8 +872,8 @@ smc &lt;- get_smocc_data()[1:2000,]</code></pre>
 <p>This returns an object that we can use to obtain individual subject fits as we will see in the next section.</p>
 <p>If you don’t know what methods are available, you can call:</p>
 <pre class="r"><code>get_avail_methods()</code></pre>
-<pre><code> [1] &quot;brokenstick&quot;   &quot;face&quot;          &quot;fda&quot;           &quot;gam&quot;          
- [5] &quot;loess&quot;         &quot;lwmod&quot;         &quot;rlm&quot;           &quot;sitar&quot;        
+<pre><code> [1] &quot;brokenstick&quot;   &quot;face&quot;          &quot;fda&quot;           &quot;gam&quot;
+ [5] &quot;loess&quot;         &quot;lwmod&quot;         &quot;rlm&quot;           &quot;sitar&quot;
  [9] &quot;smooth.spline&quot; &quot;wand&quot;         </code></pre>
 </div>
 <div id="fitting-individual-trajectories" class="section level2">
@@ -883,8 +883,8 @@ smc &lt;- get_smocc_data()[1:2000,]</code></pre>
 <pre class="r"><code>fit &lt;- fit_trajectory(subset(smc, subjid == 10001), facefit)</code></pre>
 <p>Let’s first look at what the output looks like. Our <code>fit</code> object is a list with the following elements:</p>
 <pre class="r"><code>names(fit)</code></pre>
-<pre><code> [1] &quot;xy&quot;         &quot;fit&quot;        &quot;fitgrid&quot;    &quot;checkpoint&quot; &quot;pars&quot;      
- [6] &quot;resid&quot;      &quot;data&quot;       &quot;sex&quot;        &quot;x_var&quot;      &quot;y_var&quot;     
+<pre><code> [1] &quot;xy&quot;         &quot;fit&quot;        &quot;fitgrid&quot;    &quot;checkpoint&quot; &quot;pars&quot;
+ [6] &quot;resid&quot;      &quot;data&quot;       &quot;sex&quot;        &quot;x_var&quot;      &quot;y_var&quot;
 [11] &quot;method&quot;    </code></pre>
 <p>You can investigate what each one of these looks like on your own, but here is a description of what each of these represents:</p>
 <ul>
@@ -983,7 +983,7 @@ lines(fit$fitgrid$x, fit$fitgrid$y)</code></pre>
 <h2>Fitting all trajectories</h2>
 <p>Typically in a study made up of several subjects, we want to fit growth trajectories for every subject. A convenience function <code><a target='_blank' href='rd.html#fit_all_trajectories'>fit_all_trajectories()</a></code> is available to do this.</p>
 <p>For example, to fit the height-for-age trajectory of each subject in the SMOCC sample data, we can do the following:</p>
-<pre class="r"><code>smc_tr &lt;- fit_all_trajectories(cpp, facefit)</code></pre>
+<pre class="r"><code>smc_tr &lt;- fit_all_trajectories(smc, facefit)</code></pre>
 <p>The output of <code><a target='_blank' href='rd.html#fit_all_trajectories'>fit_all_trajectories()</a></code> is “distributed data object” or “DDO” - basically a list of trajectory fits for each subject, indexed by a key of the subject’s id. DDOs are constructs from an R package <a href="http://github.com/tesseradata/datadr">datadr</a> that is part of the <a href="http://tessera.io">Tessera</a> project. These objects are the basis for creating Trelliscope displays, and while in this particular example we are working with a small in-memory data set, DDOs are designed to be able to be distributed across many disks on a cluster when dealing with large data sets. For more information about this type of data structure, see the <a href="http://tessera.io/docs-datadr">documentation for datadr</a>.</p>
 <p>To inspect the output of the result of <code><a target='_blank' href='rd.html#fit_all_trajectories'>fit_all_trajectories()</a></code>:</p>
 <pre class="r"><code>smc_tr</code></pre>
@@ -1240,6 +1240,6 @@ Distributed data object backed by &#39;kvMemory&#39; connection
     </div>
   </div>
 
-  
+
 </body>
 </html>

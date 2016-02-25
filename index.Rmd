@@ -932,7 +932,7 @@ Typically in a study made up of several subjects, we want to fit growth trajecto
 For example, to fit the height-for-age trajectory of each subject in the SMOCC sample data, we can do the following:
 
 ```{r fit5c, eval=FALSE, echo=TRUE}
-smc_tr <- fit_all_trajectories(cpp, facefit)
+smc_tr <- fit_all_trajectories(smc, facefit)
 ```
 
 The output of `r rdl(fit_all_trajectories())` is "distributed data object" or "DDO" - basically a list of trajectory fits for each subject, indexed by a key of the subject's id.  DDOs are constructs from an R package [datadr](http://github.com/tesseradata/datadr) that is part of the [Tessera](http://tessera.io) project.  These objects are the basis for creating Trelliscope displays, and while in this particular example we are working with a small in-memory data set, DDOs are designed to be able to be distributed across many disks on a cluster when dealing with large data sets.  For more information about this type of data structure, see the [documentation for datadr](http://tessera.io/docs-datadr).
