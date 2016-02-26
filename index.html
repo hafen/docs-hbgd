@@ -133,10 +133,9 @@
 <p>The hbgd package is not yet on CRAN but can be installed from a CRAN-like repository with the following:</p>
 <pre class="r"><code>options(repos = c(
   CRAN = &quot;http://cran.rstudio.com/&quot;,
-  tessera = &quot;http://packages.tessera.io&quot;,
-  BioCsoft = &quot;http://bioconductor.org/packages/3.0/bioc&quot;))
+  tessera = &quot;http://packages.tessera.io&quot;))
 install.packages(&quot;hbgd&quot;)</code></pre>
-<p>The Bioconductor repository is added because some of the fitting methods linked to in ‘hbgd’ have dependencies on Bioconductor packages.</p>
+
 <!-- Note that some of the package dependencies for hbgd rely on Bioconductor packages, and you may need to install Bioconductor to get a successful install.  If this is the case, you need to run the following:
 
 ```r
