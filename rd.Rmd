@@ -13,7 +13,7 @@ navpills: |
 <h1>Healthy birth, growth &amp; development</h1>
 
 <p><strong>Authors:</strong> <a href="mailto:rhafen@gmail.com">Ryan Hafen</a> [aut, cre],<a href="mailto:craig.anderson@uts.edu.au">Craig Anderson</a> [ctb]</p>
-<p><strong>Version:</strong> 0.3.1</p>
+<p><strong>Version:</strong> 0.3.2</p>
 <p><strong>License:</strong> MIT + file LICENSE</p>
 
 <h4>Description</h4>
@@ -23,21 +23,21 @@ longitudinal growth data.</p>
 <h4>Depends</h4>
 <p>
 R (>= 3.1),
-datadr,
-trelliscope</p>
+datadr (>= 0.8.1),
+trelliscope (>= 0.9.2)</p>
 
 <h4>Imports</h4>
 <p>
 dplyr,
 lattice,
-rbokeh (>= 0.2.4.1),
+rbokeh (>= 0.3.4),
 ggplot2,
 mgcv,
 MASS,
 numDeriv,
 gamlss.dist,
 fda,
-face (>= 0.1-1),
+face (>= 0.1-2),
 brokenstick (>= 0.16),
 sitar (>= 1.0.3),
 DT,
@@ -2117,8 +2117,8 @@ The Lancet, Volume 384, Issue 9946, 869-879</p>
 
 <h4>Usage</h4>
 <pre class="r"><code>get_fit(dat, x_var = "agedays", y_var = "htcm", method = "fda",
-  xg = NULL, checkpoints = 365 * c(1:2), z_bins = -2, holdout = FALSE,
-  x_trans = NULL, x_inv = NULL, y_trans = NULL, y_inv = NULL, ...)</code></pre>
+  holdout = FALSE, x_trans = NULL, x_inv = NULL, y_trans = NULL,
+  y_inv = NULL, ...)</code></pre>
 
 <h4>Arguments</h4>
 <dl class="rd-dl">
@@ -2130,12 +2130,6 @@ The Lancet, Volume 384, Issue 9946, 869-879</p>
   <dd class="rd-dd">name of y variable to model (usually an anthropometric measure or z-score scaled anthropometric measure)</dd>
   <dt>method</dt>
   <dd class="rd-dd">name of fitting method to use (see <code><a href=#get_avail_methods>get_avail_methods</a></code>)</dd>
-  <dt>xg</dt>
-  <dd class="rd-dd">grid of x points at which the fit should be evaluated for plotting (if <code>NULL</code> it will be set to an equally-spaced grid of 150 points across <code>x</code>)</dd>
-  <dt>checkpoints</dt>
-  <dd class="rd-dd">x values at which to compute "checkpoints" of the subjectss growth trajectory to compare to other subjects</dd>
-  <dt>z_bins</dt>
-  <dd class="rd-dd">a vector indicating binning of z-scores for the subjects trajectory at each checkpoint with respect to the the WHO growth standard</dd>
   <dt>holdout</dt>
   <dd class="rd-dd">should an observation be held out for fitting (will use column <code>hold</code> in <code>dat</code> to which observations to hold out)</dd>
   <dt>x_trans, y_trans</dt>
@@ -2156,7 +2150,8 @@ The Lancet, Volume 384, Issue 9946, 869-879</p>
 
 
 <h4>Usage</h4>
-<pre class="r"><code>fit_trajectory(dat, fit)</code></pre>
+<pre class="r"><code>fit_trajectory(dat, fit, xg = NULL, checkpoints = 365 * c(1:2),
+  z_bins = -2)</code></pre>
 
 <h4>Arguments</h4>
 <dl class="rd-dl">
@@ -2164,6 +2159,12 @@ The Lancet, Volume 384, Issue 9946, 869-879</p>
   <dd class="rd-dd">data frame containing variables for one subject to apply a fit to</dd>
   <dt>fit</dt>
   <dd class="rd-dd">an object returned from <code><a href=#get_fit>get_fit</a></code></dd>
+  <dt>xg</dt>
+  <dd class="rd-dd">grid of x points at which the fit should be evaluated for plotting (if <code>NULL</code> it will be set to an equally-spaced grid of 150 points across <code>x</code>)</dd>
+  <dt>checkpoints</dt>
+  <dd class="rd-dd">x values at which to compute "checkpoints" of the subjectss growth trajectory to compare to other subjects</dd>
+  <dt>z_bins</dt>
+  <dd class="rd-dd">a vector indicating binning of z-scores for the subjects trajectory at each checkpoint with respect to the the WHO growth standard</dd>
 </dl>
 
 
@@ -2188,7 +2189,8 @@ lines(fit2$fitgrid$x, fit2$fitgrid$z)</code></pre>
 
 
 <h4>Usage</h4>
-<pre class="r"><code>fit_all_trajectories(dat, fit)</code></pre>
+<pre class="r"><code>fit_all_trajectories(dat, fit, xg = NULL, checkpoints = 365 * c(1:2),
+  z_bins = -2)</code></pre>
 
 <h4>Arguments</h4>
 <dl class="rd-dl">
@@ -2196,13 +2198,20 @@ lines(fit2$fitgrid$x, fit2$fitgrid$z)</code></pre>
   <dd class="rd-dd">a data frame containing data for several subjects or a ddf already divided by subject, as obtained from <code><a href=#by_subject>by_subject</a></code></dd>
   <dt>fit</dt>
   <dd class="rd-dd">an object returned from <code><a href=#get_fit>get_fit</a></code></dd>
+  <dt>xg</dt>
+  <dd class="rd-dd">grid of x points at which the fit should be evaluated for plotting (if <code>NULL</code> it will be set to an equally-spaced grid of 150 points across <code>x</code>)</dd>
+  <dt>checkpoints</dt>
+  <dd class="rd-dd">x values at which to compute "checkpoints" of the subjectss growth trajectory to compare to other subjects</dd>
+  <dt>z_bins</dt>
+  <dd class="rd-dd">a vector indicating binning of z-scores for the subjects trajectory at each checkpoint with respect to the the WHO growth standard</dd>
 </dl>
 
 
 <h4>Examples</h4>
-<pre class="r"><code>cppt <- fit_all_trajectories(cpp, y_var = "wtkg")
-cppt[[1]]
-plot(cppt[[1]]$value)</code></pre>
+<pre class="r"><code>cppfit <- get_fit(cpp, y_var = "wtkg", method = "rlm")
+cpptr  <- fit_all_trajectories(cpp, cppfit)
+cpptr[[1]]
+plot(cpptr[[1]]$value)</code></pre>
 
 
 
@@ -3002,9 +3011,10 @@ plot_time_count_grid(dat_list)</code></pre>
 
 
 <h4>Examples</h4>
-<pre class="r"><code>  cppsubj <- by_subject(cpp)
-  cppt <- fit_all_trajectories(cppsubj, method = "rlm")
-  cpptr <- trscope_trajectories(cppt)</code></pre>
+<pre class="r"><code>cppsubj <- by_subject(cpp)
+cppfit  <- get_fit(cpp, method = "rlm")
+cpptr   <- fit_all_trajectories(cppsubj, cppfit)
+cppplot <- trscope_trajectories(cpptr)</code></pre>
 
 
 
@@ -3042,9 +3052,10 @@ plot_time_count_grid(dat_list)</code></pre>
 
 
 <h4>Examples</h4>
-<pre class="r"><code>  cppsubj <- by_subject(cpp)
-  cppt <- fit_all_trajectories(cppsubj, method = "rlm")
-  cppt <- trscope_velocities(cppt)</code></pre>
+<pre class="r"><code>cppsubj <- by_subject(cpp)
+cppfit  <- get_fit(cpp, method = "rlm")
+cpptr   <- fit_all_trajectories(cppsubj, cppfit)
+cppplot <- trscope_velocities(cpptr)</code></pre>
 
 # Divisions
 
@@ -3089,8 +3100,9 @@ plot_time_count_grid(dat_list)</code></pre>
 
 <h4>Examples</h4>
 <pre class="r"><code>cppsubj <- by_subject(cpp)
-cppt <- fit_all_trajectories(cppsubj, method = "rlm")
-cppcp <- by_trajectory_checkpoints(cppt)</code></pre>
+cppfit  <- get_fit(cpp, method = "rlm")
+cpptr   <- fit_all_trajectories(cppsubj, cppfit)
+cppcp   <- by_trajectory_checkpoints(cpptr)</code></pre>
 
 # Data Sets
 

@@ -414,6 +414,8 @@ dat <- data.frame(
 
 dat$p99 <- who_centile2wtkg(dat$x, p = 99, sex = dat$sex)
 
+library(lattice)
+
 xyplot(kg2lb(p99) ~ days2years(x), groups = sex, data = dat,
   ylab = "99th percentile weight (pounds) for males",
   xlab = "age (years)", auto.key = TRUE)
@@ -555,7 +557,7 @@ Some examples are below.
 Here is an example of using the utility function, `r rdl(geom_who())`, with a plot of a CPP subject's height vs. age, plotting the default of WHO bands at centiles 1, 5, 25, 50, 75, 95, 99:
 
 ```{r who_gg, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
-# make sure lencm is also in htcm before plotting
+library(ggplot2)
 p <- ggplot(data = subset(cpp, subjid == 8), aes(x = agedays, y = htcm))
 geom_who(p, x = seq(0, 2600, by = 10)) +
   geom_point()
@@ -580,7 +582,7 @@ xyplot(wtkg ~ agedays, data = subset(cpp, subjid == 8),
 
 Here's an example plotting the same plot as the lattice plot, transforming `agedays` to age in years and taking advantage of several of rbokeh's interactive features, such as hover and zoom/pan.
 
-```{r who_bokeh, eval=TRUE, echo=TRUE, message=FALSE}
+```{r who_bokeh, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 library(rbokeh)
 figure(xlab = "Age (years)", ylab = "wtkg") %>%
   ly_who(x = seq(0, 2600, by = 10), y_var = "wtkg",
@@ -592,7 +594,7 @@ figure(xlab = "Age (years)", ylab = "wtkg") %>%
 
 Look at Male birth lengths superposed on the INTERGROWTH birth standard:
 
-```{r igb_bokeh, eval=TRUE, echo=TRUE, message = FALSE}
+```{r igb_bokeh, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 # first we need just 1 record per subject with subject-level data
 cppsubj <- get_subject_data(cpp)
 figure(xlab = "Gestational Age at Birth (days)", ylab = "Birth Length (cm)") %>%
@@ -603,7 +605,7 @@ figure(xlab = "Gestational Age at Birth (days)", ylab = "Birth Length (cm)") %>%
 
 Plot INTERGROWTH prenatal growth standard bands at z=1,2,3 for prenatal head circumference
 
-```{r igpre_bokeh, eval=TRUE, echo=TRUE, message = FALSE}
+```{r igpre_bokeh, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 figure(xlab = "Gestational Age (days)",
   ylab = "Head Circumference (cm)") %>%
     ly_igpre(gagedays = 98:280, var = "hccm", p = pnorm(-3:0) * 100)
@@ -623,13 +625,13 @@ A simple function is available to plot the univariate distributions of all varia
 
 #### Subject-level variable summaries
 
-```{r datadist1, eval=TRUE, echo=TRUE, message=FALSE}
+```{r datadist1, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_univar(cpp, subject = TRUE, width = 250, height = 250)
 ```
 
 #### Time-varying variable summaries
 
-```{r datadist2, eval=TRUE, echo=TRUE, message=FALSE}
+```{r datadist2, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_univar(cpp, subject = FALSE, width = 250, height = 250)
 ```
 
@@ -639,13 +641,13 @@ There are a few plot methods available for investigating missing data.  We can p
 
 #### Subject-level variables missing values
 
-```{r explore1, eval=TRUE, echo=TRUE, message=FALSE}
+```{r explore1, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_missing(cpp, subject = TRUE)
 ```
 
 #### Time-varying variables missing values
 
-```{r explore1.1, eval=TRUE, echo=TRUE, message=FALSE}
+```{r explore1.1, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_missing(cpp)
 ```
 
@@ -655,13 +657,13 @@ We can also plot a heat map of frequency of "complete" (both non-NA) pairs of va
 
 #### Subject-level variables complete pairs
 
-```{r explore2, eval=TRUE, echo=TRUE, message=FALSE}
+```{r explore2, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_complete_pairs(cpp, subject = TRUE)
 ```
 
 #### Time-varying variables complete pairs
 
-```{r explore2.1, eval=TRUE, echo=TRUE, message=FALSE}
+```{r explore2.1, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_complete_pairs(cpp)
 ```
 
@@ -673,7 +675,7 @@ There are some additional plot methods more specific to the subject matter of lo
 
 One of these is looking at the distribution of the number of "visits" recorded for each subject.  This plots both a histogram and a quantile plot of the number of records found in the data for each subject ID.  The histogram is useful for seeing the shape of the distribution, while the quantile plot lets us see more detail.
 
-```{r explore3, eval=TRUE, echo=TRUE, message=FALSE}
+```{r explore3, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_visit_distn(cpp, width = 350, height = 350)
 ```
 
@@ -681,7 +683,7 @@ From this we see that a significant proportion of subjects had 4 visits, while s
 
 #### Age at first visit
 
-```{r explore4, eval=TRUE, echo=TRUE, message=FALSE}
+```{r explore4, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_first_visit_age(cpp, width = 350, height = 350)
 ```
 
@@ -691,7 +693,7 @@ Since the observations in this data have been snapped to only a set of specific 
 
 Another useful plot is the frequency of `agedays` to get a feel for how many observations there are at each day of the study.
 
-```{r explore5, eval=TRUE, echo=TRUE, message=FALSE}
+```{r explore5, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 agefreq <- get_agefreq(cpp)
 plot_agefreq(agefreq)
 ```
@@ -776,7 +778,7 @@ save(facefit, smc_tr, bsfit, smc_tr_bs, facefit_hold,
 load("cache/smc_fits.Rdata")
 ```
 
-```{r fit_face1, message = FALSE}
+```{r fit_face1, message=FALSE}
 # get first 2k rows of SMOCC data
 smc <- get_smocc_data()[1:2000,]
 ```
@@ -832,6 +834,8 @@ You can investigate what each one of these looks like on your own, but here is a
 - `sex`: the subject's sex
 - `x_var`, `y_var`: the names of the variables used for "x" and "y" in the trajectory fitting
 
+Additional parameters to `r rdl(fit_trajectory())` allow control over some of these outputs, such as specifying the grid points for the grid fit, setting the checkpoints, and setting the z-score bins for the checkpoint z-score categorizations
+
 ### Plotting trajectory fits
 
 After inspecting what the output of `fit` looks like, we can get a better understanding of what's available by making some plots.  We can make simple plots by accessing the data directly:
@@ -843,7 +847,7 @@ lines(fit$fitgrid$x, fit$fitgrid$y)
 
 There are also several built-in plot methods.  One is simply `r rdl(plot.fittedTrajectory())`, which plots the original data points, the fitted trajectory, and the checkpoints superposed over the WHO growth standard:
 
-```{r fit_plot2, eval=TRUE, echo=TRUE, message = FALSE}
+```{r fit_plot2, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot(fit, x_range = c(0, 755), hover = c("agedays", "htcm"))
 ```
 
@@ -853,7 +857,7 @@ You can specify variables to show when the raw data points are hovered.  The che
 
 You can also plot the fits on the "d-scale", which is basically taking the raw fitted curve and subtracting the WHO growth standard using `center = TRUE`:
 
-```{r fit_plot3, eval=TRUE, echo=TRUE, message = FALSE}
+```{r fit_plot3, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot(fit, x_range = c(0, 755), hover = c("agedays", "htcm"), center = TRUE)
 ```
 
@@ -861,7 +865,7 @@ These are height-for-age difference (HAD) scores [see here](http://www.ifpri.org
 
 We may also want to plot the data on the z-score scale.  If the y-variable specified in the fitting method is WHO-transformable, the z-scores are automatically computed and included with the fit.  We can plot on the z-score scale with `r rdl(plot_z())`:
 
-```{r fit_plot4, eval=TRUE, echo=TRUE, message = FALSE}
+```{r fit_plot4, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_z(fit, hover = c("agedays", "wtkg"))
 ```
 
@@ -872,13 +876,13 @@ From looking at this plot, one would speculate that we are overfitting a bit.  T
 
 Also, the fitting method automatically computes the velocity of the fit and if applicable the z-score fit.  We can plot these with:
 
-```{r fit_plot5, eval=TRUE, echo=TRUE, message = FALSE}
+```{r fit_plot5, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_velocity(fit)
 ```
 
 And for the z-score scale:
 
-```{r fit_plot6, eval=TRUE, echo=TRUE, message = FALSE}
+```{r fit_plot6, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_zvelocity(fit)
 ```
 
@@ -886,7 +890,7 @@ There are some artificial bumps in the velocities due to jumps in the WHO standa
 
 ### Additional parameters
 
-Additional parameters can be applied to `r rdl(get_fit())` for additional control over the output, such as controlling the grid points for the grid fit, setting the checkpoints, setting the z-score bins for the checkpoint z-score categorizations, transformations to be applied to the x and y variables prior to fitting, and any smoothing parameters you wish to pass on to the fitting method.  See the function reference for `r rdl(get_fit())` for more details.
+Additional parameters can be applied to `r rdl(get_fit())`, such as transformations to be applied to the x and y variables prior to fitting and any smoothing parameters you wish to pass on to the fitting method.  See the function reference for `r rdl(get_fit())` for more details.
 
 ### Fitting on the z-score scale
 
@@ -950,13 +954,13 @@ We see this is a list with an element "key" telling us that the data in this sub
 
 We can plot the trajectory of this subset as we have seen before for output of `r rdl(fit_trajectory())`:
 
-```{r fit7, eval=TRUE, echo=TRUE}
+```{r fit7, eval=TRUE, echo=TRUE, lazy=TRUE}
 plot(smc_tr[[1]]$value, hover = c("agedays", "htcm"))
 ```
 
 Note that we can also access subsets by key:
 
-```{r fit11, eval=TRUE, echo=TRUE}
+```{r fit11, eval=TRUE, echo=TRUE, lazy=TRUE}
 plot_z(smc_tr[["subjid=10002"]]$value, hover = c("agedays", "htcm"))
 ```
 
@@ -992,7 +996,7 @@ smc_tr_bs_hold <- fit_all_trajectories(smc, bsfit_hold)
 
 Finally, we can compute the MSE values for each fit with a convenience function `r rdl(get_fit_holdout_mse())` (this can of course be done manually as well).
 
-```{r smocc_holdout4, message = FALSE}
+```{r smocc_holdout4, message=FALSE}
 get_fit_holdout_mse(smc_tr_face_hold)
 get_fit_holdout_mse(smc_tr_bs_hold)
 ```
@@ -1106,7 +1110,7 @@ Here we show a few kinds of divisions and how to create them, with some addition
 
 The way to create a division using the `datadr` package
 
-```{r divide1, eval=TRUE, echo=TRUE, message = FALSE}
+```{r divide1, eval=TRUE, echo=TRUE, message=FALSE}
 smc_subj <- divide(smc, by = "subjid")
 ```
 
@@ -1166,7 +1170,7 @@ dat_list <- list(cpp = cpp, smc = smc)
 
 We can make a plot of study vs. variable color-coded by variable type with the following:
 
-```{r multivarmat, eval=TRUE, echo=TRUE, message=FALSE}
+```{r multivarmat, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_var_matrix(dat_list)
 ```
 
@@ -1176,13 +1180,13 @@ This plot is designed to scale to a large number of data sets by growing in heig
 
 #### Plot counts by age for a list of studies
 
-```{r multicount, eval=TRUE, echo=TRUE, message=FALSE}
+```{r multicount, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_time_count_grid(dat_list)
 ```
 
 #### Compare distributions of visits per subject
 
-```{r multivisit, eval=TRUE, echo=TRUE, message=FALSE}
+```{r multivisit, eval=TRUE, echo=TRUE, message=FALSE, lazy=TRUE}
 plot_multi_subj_boxplot(dat_list)
 ```
 
